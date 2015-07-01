@@ -8,7 +8,7 @@
 #ifndef __RAT_DS_PMT__
 #define __RAT_DS_PMT__
 
-#include <RTypes.h>
+#include <Rtypes.h>
 #include <RAT/DS/Sample.hh>
 
 namespace RAT {

@@ -104,7 +104,7 @@ public:
   virtual void PruneMCHit() { hit.resize(0); }
 
   // Sort by hit time
-  typedef bool (*MCHitSortFcn)(DS::MCHit& a, MCHit& b);
+  typedef bool (*MCHitSortFcn)(DS::MCHit a, DS::MCHit b);
   virtual inline void SortMCHit(MCHitSortFcn fcn) {
     std::sort(hit.begin(), hit.end(), fcn);
   }

@@ -15,13 +15,16 @@
 
 namespace RAT {
 
-inline bool Cmp_MCHit_TimeAscending(DS::MCHit& a, DS::MCHit& b) {
+inline bool Cmp_MCHit_TimeAscending(DS::MCHit a, DS::MCHit b) {
   return a.GetMCSample(0)->GetHitTime() < b.GetMCSample(0)->GetHitTime();
 }
 
 
 EventBuilderProc::EventBuilderProc() : Processor("eventbuilder") {
   DBLinkPtr ldaq = DB::Get()->GetLink("DAQ");
+  
+  double fTriggerDelay = ldaq->GetD("trigger_delay");
+  double fTriggerGate = ldaq->GetD("trigger_gate");
 
   info << dformat(" Trigger Delay : %5.2f ns\n", fTriggerDelay)
        << dformat(" Trigger Gate  : %5.2f ns\n", fTriggerGate);
@@ -105,7 +108,7 @@ double EventBuilderProc::DigitizeT(double hitTime, double stopTime) {
 
 // Eventually this will have to return a 12-bit integer,
 // in ADC counts
-float EventBuilderProc::DigitizeQ(float hitCharge) {
+ float EventBuilderProc::DigitizeQ(float hitCharge) {
   return hitCharge;
 }
 

@@ -6,7 +6,7 @@
 #ifndef __RAT_DS_MCSample__
 #define __RAT_DS_MCSample__
 
-#include <RTypes.h>
+#include <Rtypes.h>
 #include <TObject.h>
 
 namespace RAT {
