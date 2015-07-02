@@ -1,5 +1,6 @@
 #include <RAT/MultiChargeDist.hh>
-#include <RAT/PMTCharge.hh>
+#include <RAT/MiniCleanPMTCharge.hh>
+#include <RAT/PDFPMTCharge.hh>
 #include <RAT/string_utilities.hpp>
 #include <RAT/DB.hh>
 #include <RAT/DBLink.hh>
@@ -111,17 +112,10 @@ namespace RAT {
   std::vector<TGraph*> MultiChargeDist(int maxPE, double qMaxStepSize,
 				       int qBins, double meanSinglePE)
     {
-	DBLinkPtr lpmt;
-	try{
-	  DBLinkPtr ldetector = DB::Get()->GetLink("DETECTOR");
-	  lpmt = DB::Get()->GetLink("PMT", ldetector->GetS("pmt_type"));
-	}
-	catch(DBNotFoundError& e){
-	  DBLinkPtr lgeo = DB::Get()->GetLink("GEO", "PMTs");
-	  lpmt = DB::Get()->GetLink("PMT", lgeo->GetS("pmt_type"));
-	}
-	PMTCharge* pmtCharge = new PMTCharge();
-
+    //FIXME: future people might appreciate being able to specify a pmt_model
+    //to be used with PDFPMTCharge, but this was original behavior
+    PMTCharge* pmtCharge = new RAT::MiniCleanPMTCharge();
+    
 	// Calculate the range of the 1 PE PDF.  The value of the PDF
 	// at this value sets the boundaries for the PE > 1 PDFs.
 	double maxSinglePE = 5 * meanSinglePE;
@@ -226,8 +220,8 @@ namespace RAT {
 	// Deallocate the TH1Ds and check the means
 	int inorm = -1;
 	for (unsigned i=0; i < chargeDist.size(); i++){
-	  if(abs(chargeDist[i]->GetMean() - 
-		 i*meanSinglePE) / (i*meanSinglePE) > 0.01 && inorm < 0)
+	  if(fabs(chargeDist[i]->GetMean() -
+		  i*meanSinglePE) / (i*meanSinglePE) > 0.01 && inorm < 0)
 	    inorm = i;
 	  delete chargeDist[i];
 	}

@@ -63,6 +63,15 @@ public:
   }
   virtual void PruneMCParticle() { particle.resize(0); }
 
+  /** Parent particles of interaction */
+  virtual MCParticle* GetMCParent(Int_t i) { return &parent[i]; }
+  virtual int GetMCParentCount() const { return parent.size(); }
+  virtual MCParticle* AddNewMCParent() {
+    parent.resize(parent.size() + 1);
+    return &parent.back();
+  }
+  virtual void PruneMCParent() { parent.resize(0); }
+
   /** Particle tracks in detector.
    *
    *  Not filled unless the command
@@ -86,9 +95,9 @@ public:
   }
 
   /** List of PMTs which had at least one photoelectron generated */
-  virtual MCPMT* GetPMT(int i) { return &pmt[i]; }
-  virtual int GetPMTCount() const { return pmt.size(); }
-  virtual MCPMT* AddNewPMT() {
+  virtual MCPMT* GetMCPMT(int i) { return &pmt[i]; }
+  virtual int GetMCPMTCount() const { return pmt.size(); }
+  virtual MCPMT* AddNewMCPMT() {
     pmt.resize(pmt.size() + 1);
     return &pmt.back();
   };
@@ -139,6 +148,7 @@ protected:
   std::vector<MCTrack> track;  //< List of tracks, if enabled
   std::vector<MCPMT> pmt;  //< List of MC truth PMTs
   std::vector<MCHit> hit;  //< List of MC truth electronics hits
+
 };
 
   } // namespace DS

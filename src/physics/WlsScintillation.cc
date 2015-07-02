@@ -296,7 +296,8 @@ WlsScintillation::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
 
         // Birks law saturation:
 
-       // G4double constBirks = 0.0;
+
+        //G4double constBirks = 0.0;
 
         //constBirks = aMaterial->GetIonisation()->GetBirksConstant();
 

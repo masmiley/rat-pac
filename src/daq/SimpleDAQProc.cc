@@ -23,10 +23,12 @@ Processor::Result SimpleDAQProc::DSEvent(DS::Root *ds) {
   ev->SetID(fEventCounter);
   fEventCounter++;
 
-  double totalQ = 0;
-  for (int imcpmt=0; imcpmt<mc->GetPMTCount(); imcpmt++) {
-    DS::MCPMT* mcpmt = mc->GetPMT(imcpmt);
-    int pmtID = mcpmt->GetID();
+
+  double totalQ = 0.0;
+  double calibQ = 0.0;
+  for (int imcpmt=0; imcpmt < mc->GetMCPMTCount(); imcpmt++) {
+      DS::MCPMT *mcpmt = mc->GetMCPMT(imcpmt);
+      int pmtID = mcpmt->GetID();
 
     if (mcpmt->GetMCPhotonCount() > 0) {
       // Need at least one photon to trigger
@@ -37,18 +39,24 @@ Processor::Result SimpleDAQProc::DSEvent(DS::Root *ds) {
       // "infinite" charge integration time
       // WARNING: gets multiphoton effect right, but not walk correction
 
-      double time = mcpmt->GetMCPhoton(0)->GetFrontEndTime();
-      double charge = 0;
 
-      for (int i=0; i < mcpmt->GetMCPhotonCount(); i++)  {
-        charge += mcpmt->GetMCPhoton(i)->GetCharge();
-      }
+        double time = mcpmt->GetMCPhoton(0)->GetHitTime();
+        double charge = 0;
 
-      totalQ += charge;
+        for (int i=0; i < mcpmt->GetMCPhotonCount(); i++)  {
+          if (time > mcpmt->GetMCPhoton(i)->GetHitTime())
+            time = mcpmt->GetMCPhoton(i)->GetHitTime();
+          charge += mcpmt->GetMCPhoton(i)->GetCharge();
+        }
+        
+        //pmt->SetCalibratedCharge(charge);
+        totalQ += charge;
 
-      DS::Sample* sample = pmt->AddNewSample();
-      sample->SetCharge(charge);
-      sample->SetTime(time);
+        //charge *= fSPECharge[pmtID] * 1e12; /* convert to pC */
+        pmt->SetTime(time);
+        pmt->SetCharge(charge);
+        calibQ += charge;
+
     }
   }
 

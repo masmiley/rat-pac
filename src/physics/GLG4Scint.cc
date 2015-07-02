@@ -269,7 +269,8 @@ GLG4Scint::PostPostStepDoIt(const G4Track& aTrack, const G4Step& aStep) {
     G4int numSecondaries;
     G4double weight;
     //G4double reemissionProb = 0;
-   // G4int numComponents = -1;
+
+    //G4int numComponents = -1;
     //G4int absorberIndex = -1;
 
     if (flagReemission) {
@@ -279,7 +280,9 @@ GLG4Scint::PostPostStepDoIt(const G4Track& aTrack, const G4Step& aStep) {
       // Check if there are multiple components
       if (mpt_scint->ConstPropertyExists("COMPONENTS")) {
         RAT::Log::Die("GLG4Scint: COMPONENTS not yet implemented");
-      //  numComponents = mpt_scint->GetConstProperty("NUM_COMP");
+
+        //numComponents = (G4int) mpt_scint->GetConstProperty("NUM_COMP");
+
       }
 
       G4MaterialPropertyVector* mpv_scint_reemission =
@@ -792,9 +795,6 @@ void GLG4Scint::MyPhysicsTable::Entry::Build(
       G4cout << "\nWarning! Found a scintillator without LIGHT_YIELD parameter.";
       G4cout << "\nI will assume that for this material this parameter is ";
       G4cout << "implicit in the scintillation integral..." << G4endl;
-
-      // If no light yield, it's no scintillator
-      theScintillationLightVector=NULL;
     }
 
     // find the integral
