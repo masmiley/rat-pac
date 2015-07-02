@@ -36,9 +36,9 @@ Processor::Result FrontEndProc::DSEvent(DS::Root* ds) {
   Log::Assert(ds->ExistMC(), "FrontEndProc: No MC information found.");
 
   // Outer loop is over all hit MCPMTs
-  int pmtCount = ds->GetMC()->GetPMTCount();
+  int pmtCount = ds->GetMC()->GetMCPMTCount();
   for (int ipmt=0; ipmt<pmtCount; ipmt++) {
-    DS::MCPMT* pmt = ds->GetMC()->GetPMT(ipmt);
+    DS::MCPMT* pmt = ds->GetMC()->GetMCPMT(ipmt);
     DS::MCHit* hit = NULL;
 
     // For each hit PMT, loop over the photoelectrons. At the time
@@ -48,21 +48,39 @@ Processor::Result FrontEndProc::DSEvent(DS::Root* ds) {
     for (int iphoton=0; iphoton<photonCount; iphoton++) {
       DS::MCPhoton* photon = pmt->GetMCPhoton(iphoton);
       double timeNow = photon->GetHitTime();
-
+      if (ipmt % 20 == 0) {
+      info << dformat("PMT count: %d Photon count: %d PMT: %d Photon: %d \n", pmtCount, photonCount, ipmt, iphoton) 
+           << dformat("timeNow: %f photon->GetHitTime() %f \n", timeNow, photon->GetHitTime());
+      }
       // Now we check how many pulses before our current pulse contribute
       // to the total seen by the front end discriminator
       int sumIndex = iphoton;
       double deltaT = 0;
-      float charge = photon->GetCharge();
+      double charge = photon->GetCharge();
+      if (ipmt % 20 ==0) {
+       info  << dformat("Before loop sumIndex : %d  \n", sumIndex) << "Charge: " << charge << " Photon get charge: " << photon->GetCharge() << "\n"
+             << dformat("Charge: %f PE(?) photon->GetCharge() %f PE(?) \n", charge, photon->GetCharge()) << dformat("deltaT: %f ns(?) Zero: %d \n", deltaT, 0);
+       if (charge == 1){
+          info << "Charge is 1 \n";
+       }
+       if (charge <  .0001 && charge > 0) {
+          info << "Charge is wacky \n";
+       }
+      }
       while (deltaT <= fPulseWidth && sumIndex > 0) {
          sumIndex--;
          charge += pmt->GetMCPhoton(sumIndex)->GetCharge();
          deltaT = timeNow - pmt->GetMCPhoton(sumIndex)->GetHitTime();
       }
+      if (ipmt % 20 ==0) {
+        info << dformat("After loop  sumIndex : %d number \n", sumIndex)
+             << dformat("Charge: %f PE(?) \n", charge) << dformat("deltaT: %f ns(?) \n \n", deltaT);
+      }
 
       // Now add some noise to the sum, and check it against threshold
       float qfuzzed = charge + fNoiseAmpl * CLHEP::RandGauss::shoot();
       if (qfuzzed >= fHitThreshold) {
+        // info << "Above threshold";
         // We have a hit above threshold
         if (!hit) {
           // Fill hit info if PMT not already hit

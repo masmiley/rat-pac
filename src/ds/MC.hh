@@ -148,7 +148,7 @@ protected:
   std::vector<MCTrack> track;  //< List of tracks, if enabled
   std::vector<MCPMT> pmt;  //< List of MC truth PMTs
   std::vector<MCHit> hit;  //< List of MC truth electronics hits
-
+  std::vector<MCParticle> parent;
 };
 
   } // namespace DS

@@ -23,8 +23,8 @@ inline bool Cmp_MCHit_TimeAscending(DS::MCHit a, DS::MCHit b) {
 EventBuilderProc::EventBuilderProc() : Processor("eventbuilder") {
   DBLinkPtr ldaq = DB::Get()->GetLink("DAQ");
   
-  double fTriggerDelay = ldaq->GetD("trigger_delay");
-  double fTriggerGate = ldaq->GetD("trigger_gate");
+  fTriggerDelay = ldaq->GetD("trigger_delay");
+  fTriggerGate = ldaq->GetD("trigger_gate");
 
   info << dformat(" Trigger Delay : %5.2f ns\n", fTriggerDelay)
        << dformat(" Trigger Gate  : %5.2f ns\n", fTriggerGate);
@@ -33,7 +33,6 @@ EventBuilderProc::EventBuilderProc() : Processor("eventbuilder") {
 
 Processor::Result EventBuilderProc::DSEvent(DS::Root* ds) {
   Log::Assert(ds->ExistMC(), "EventBuilderProc: No MC information found.");
-
   // First sort the MCHits
   ds->GetMC()->SortMCHit(Cmp_MCHit_TimeAscending);
 

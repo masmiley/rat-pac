@@ -25,7 +25,12 @@ public:
   virtual Int_t GetID() { return id; }
 
   /** Conventience method to get total charge in the waveform */
-  virtual inline Float_t GetCharge();
+ virtual void SetCharge(Float_t _charge) { this->charge = _charge; }
+ virtual inline Float_t GetCharge();
+  
+  /** Hit time in ns */
+  virtual void SetTime(Float_t _time) { this->time = _time; }
+  virtual Float_t GetTime() { return time; }
 
   /** Digitized charge and time samples */
   virtual Sample* GetSample(Int_t i) { return &sample[i]; }

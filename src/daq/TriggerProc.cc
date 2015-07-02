@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <string>
+#include <iostream>
 #include <cfloat>
 #include <vector>
 #include <RAT/DB.hh>
@@ -23,9 +25,9 @@ TriggerProc::TriggerProc() : Processor("trigger") {
   fEventCount = 0;
   DBLinkPtr ldaq = DB::Get()->GetLink("DAQ");
 
-  double fTrigLockout = ldaq->GetD("lockout");
-  double fNHITPulseWidth = ldaq->GetD("nhit_width");
-  double fNThreshold = ldaq->GetD("nhit_thresh");
+   fTrigLockout = ldaq->GetD("lockout");
+   fNHITPulseWidth = ldaq->GetD("nhit_width");
+   fNThreshold = ldaq->GetD("nhit_thresh");
 
   info << dformat(" NHIT Threshold       : %3.1f hits\n", fNThreshold)
        << dformat(" Trigger Lockout Time : %3.1f ns\n", fTrigLockout)
@@ -45,7 +47,6 @@ TriggerProc::Result TriggerProc::DSEvent(DS::Root* ds) {
     DS::MCHit* hit = ds->GetMC()->GetMCHit(ihit);
     int sampleCount = hit->GetMCSampleCount();
     double lastTime = -DBL_MAX;
-
     // Now loop over samples, and create a trigger pulse each time there is
     // a new sample more than PulseWidthDB from the last (ie, allow retriggers)
     for (int isample=0; isample<sampleCount; isample++) {

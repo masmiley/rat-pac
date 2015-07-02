@@ -18,7 +18,7 @@
 
 #include <TObject.h>
 #include <TVector3.h>
-
+#include <cmath>
 namespace RAT {
   namespace DS {
 
@@ -59,7 +59,7 @@ public:
    *  charge distribution for this PMT.
    */
   virtual Float_t GetCharge() const { return charge; }
-  virtual void SetCharge(Float_t _charge) { charge = _charge; }
+  virtual void SetCharge(Float_t  _charge) { charge = _charge; } 
 
   /** Is this photoelectron due to a dark hit? */
   virtual void SetDarkHit(Bool_t _isDarkHit){ isDarkHit = _isDarkHit;}
