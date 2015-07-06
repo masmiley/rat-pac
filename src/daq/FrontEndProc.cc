@@ -58,14 +58,7 @@ Processor::Result FrontEndProc::DSEvent(DS::Root* ds) {
       double deltaT = 0;
       double charge = photon->GetCharge();
       if (ipmt % 20 ==0) {
-       info  << dformat("Before loop sumIndex : %d  \n", sumIndex) << "Charge: " << charge << " Photon get charge: " << photon->GetCharge() << "\n"
-             << dformat("Charge: %f PE(?) photon->GetCharge() %f PE(?) \n", charge, photon->GetCharge()) << dformat("deltaT: %f ns(?) Zero: %d \n", deltaT, 0);
-       if (charge == 1){
-          info << "Charge is 1 \n";
-       }
-       if (charge <  .0001 && charge > 0) {
-          info << "Charge is wacky \n";
-       }
+       info  << dformat("Before loop sumIndex : %d  \n", sumIndex) << "Charge: " << charge << " Photon get charge: " << photon->GetCharge() << "\n";
       }
       while (deltaT <= fPulseWidth && sumIndex > 0) {
          sumIndex--;
@@ -73,8 +66,8 @@ Processor::Result FrontEndProc::DSEvent(DS::Root* ds) {
          deltaT = timeNow - pmt->GetMCPhoton(sumIndex)->GetHitTime();
       }
       if (ipmt % 20 ==0) {
-        info << dformat("After loop  sumIndex : %d number \n", sumIndex)
-             << dformat("Charge: %f PE(?) \n", charge) << dformat("deltaT: %f ns(?) \n \n", deltaT);
+        info << dformat("After loop  sumIndex : %d \n", sumIndex)
+             << dformat("Charge: %f PE", charge) << dformat("     deltaT: %f ns \n \n", deltaT);
       }
 
       // Now add some noise to the sum, and check it against threshold

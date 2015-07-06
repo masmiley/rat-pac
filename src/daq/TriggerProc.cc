@@ -54,6 +54,9 @@ TriggerProc::Result TriggerProc::DSEvent(DS::Root* ds) {
       double time = sample->GetHitTime();
       if (time > lastTime + fNHITPulseWidth) {
         // Nhit trigger pulses
+       // if (ihit % 5) {
+       // info << "Fifth hit sample: " << isample << "Creating new square pulse \n";
+       // }
         SquareTriggerPulse* npulse = new SquareTriggerPulse();
         npulse->SetStartTime(sample->GetHitTime());
         npulse->SetHeight(1.0);

@@ -34,28 +34,36 @@ EventBuilderProc::EventBuilderProc() : Processor("eventbuilder") {
 Processor::Result EventBuilderProc::DSEvent(DS::Root* ds) {
   Log::Assert(ds->ExistMC(), "EventBuilderProc: No MC information found.");
   // First sort the MCHits
+ // info << "Sorting hits \n";
   ds->GetMC()->SortMCHit(Cmp_MCHit_TimeAscending);
-
+ // info << "Successfully sorted hits \n";
   // Now loop over all triggers, collecting hits and samples
   for (int iev=0; iev<ds->GetEVCount(); iev++) {
+   // info << "Getting event from ds \n";
     DS::EV* ev = ds->GetEV(iev);
+   // info << "Event retrieved \n";
     ev->SetTotalCharge(0);
+   // info << "Time stamping \n";
     TTimeStamp triggerStopTime = AddNanoseconds(ev->GetUTC(), fTriggerDelay);
-
+   // info << "Time stamped \n";
     if (ds->GetMC()->GetMCHitCount() == 0) {
       continue;
     }
 
     // Loop over hits. firstSampleTime tells us the time of the first sample
     // in a given MCHit.
+   // info << "Getting first sample time \n";
     TTimeStamp firstSampleTime =
       AddNanoseconds(ev->GetUTC(),
                      ds->GetMC()->GetMCHit(0)->GetMCSample(0)->GetHitTime());
+   // info << "First sample time retrieved \n";
     int ihit = 0;
     while (ihit < ds->GetMC()->GetMCHitCount() &&
            firstSampleTime < triggerStopTime) {
       DS::MCHit* hit = ds->GetMC()->GetMCHit(ihit);
-
+      if (ihit % 20 == 0) {
+        info << "Looping over hits. At: " << ihit << "\n";
+      }
       // Advance through samples on this hit until we find the first one 
       // (if any) that is after the last trigger lockout time.
       TTimeStamp nextSampleTime;
@@ -85,13 +93,19 @@ Processor::Result EventBuilderProc::DSEvent(DS::Root* ds) {
             sample->SetTime(DigitizeT(mctime, triggerStopTime));
             sample->SetCharge(DigitizeQ(mccharge));
             ev->SetTotalCharge(ev->GetTotalCharge() + sample->GetCharge());
+            imcsample++;
           }
         }
+        else {
+          imcsample++;
+        }
       }
-
+     // info << "Setting first sample time again";
       if (ihit < ds->GetMC()->GetMCHitCount()) {
         firstSampleTime = hit->GetMCSample(0)->GetHitTime();
       }
+     // info << "Successful set time";
+      ihit++;
     }
   }
 
