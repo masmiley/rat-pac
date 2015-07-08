@@ -67,7 +67,7 @@ Processor::Result FrontEndProc::DSEvent(DS::Root* ds) {
       }
       if (ipmt % 20 ==0) {
         info << dformat("After loop  sumIndex : %d \n", sumIndex)
-             << dformat("Charge: %f PE", charge) << dformat("     deltaT: %f ns \n \n", deltaT);
+             << dformat("Charge: %f PE", charge) << dformat("     deltaT: %f ns\n", deltaT);
       }
 
       // Now add some noise to the sum, and check it against threshold
@@ -92,7 +92,9 @@ Processor::Result FrontEndProc::DSEvent(DS::Root* ds) {
         // Time of photon which crossed threshold
         sample->SetHitTime(timeNow);
         double timeStartGate = timeNow - fGDelay;
-
+        if (ipmt % 20 == 0) {
+           info << "Time Now: " << timeNow << " Gate start: " << timeStartGate << "Difference: " << timeNow - timeStartGate << " \n";
+        }
         // Loop backwards until we're at the beginning of the gate
         int hitIndex = iphoton;
         double pmttime = timeNow;
@@ -108,14 +110,19 @@ Processor::Result FrontEndProc::DSEvent(DS::Root* ds) {
 
         pmttime = pmt->GetMCPhoton(hitIndex)->GetHitTime();
         sample->SetCharge(0);
-
+        if (ipmt % 20 == 0) {
+         info << "pmttime: " << pmttime << " timeStartGate + fSamplingTime: " << timeStartGate + fSamplingTime << "\n hitIndex: " << hitIndex
+              << " Photon count " << pmt->GetMCPhotonCount() - 1 << " \n";
+        }
         // Now loop forward until the integration gate closes
         while (pmttime <= timeStartGate + fSamplingTime &&
-               hitIndex < pmt->GetMCPhotonCount() - 1) {
+               hitIndex < pmt->GetMCPhotonCount()) {// - 1) {
           sample->SetCharge(sample->GetCharge() +
                             pmt->GetMCPhoton(hitIndex)->GetCharge()); 
           hitIndex++;
-          pmttime = pmt->GetMCPhoton(hitIndex)->GetHitTime();
+          if (hitIndex < pmt->GetMCPhotonCount()) {
+           pmttime = pmt->GetMCPhoton(hitIndex)->GetHitTime();
+          }
         }
 
         // Skip to the last hit sampled
