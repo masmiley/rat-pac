@@ -37,6 +37,10 @@ public:
   /** Date/time of event trigger (UTC)*/
   virtual TTimeStamp GetUTC() const { return utc; }
   virtual void SetUTC(const TTimeStamp& _utc) { utc = _utc; }
+  
+  /** Time after MC start of event in ns */
+  virtual Double_t GetEventTime() const { return time; }
+  virtual void SetEventTime(Double_t _time) {time = _time;}
 
   /** List of pmts with at least one charge sample in this event. */
   virtual PMT* GetPMT(Int_t i) { return &pmt[i]; }
@@ -57,7 +61,7 @@ public:
   /** Total charge in all PMT waveforms (pC). */
   Float_t GetTotalCharge() const { return qTotal; }
   void SetTotalCharge(Float_t _qTotal) { qTotal = _qTotal; }
-
+  
   /** Centroid position fitter. */
   virtual Centroid* GetCentroid() {
     if (centroid.empty()) {
@@ -76,6 +80,7 @@ protected:
   Float_t calibratedTriggerTime;
   Float_t deltat;
   TTimeStamp utc;
+  Double_t time;
   std::vector<PMT> pmt;
   std::vector<Centroid> centroid;
 };

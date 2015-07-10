@@ -16,7 +16,7 @@
 namespace RAT {
 
 inline bool Cmp_MCHit_TimeAscending(DS::MCHit a, DS::MCHit b) {
-  return a.GetMCSample(0)->GetHitTime() < b.GetMCSample(0)->GetHitTime();
+  return a.GetMCSample(0)->GetHitTime() <  b.GetMCSample(0)->GetHitTime();
 }
 
 
@@ -35,9 +35,16 @@ Processor::Result EventBuilderProc::DSEvent(DS::Root* ds) {
   Log::Assert(ds->ExistMC(), "EventBuilderProc: No MC information found.");
   // First sort the MCHits
   ds->GetMC()->SortMCHit(Cmp_MCHit_TimeAscending);
+  for (int ihit = 0; ihit < ds->GetMC()->GetMCHitCount(); ihit++) {
+    for (int isample = 0; isample < ds->GetMC()->GetMCHit(ihit)->GetMCSampleCount(); isample++) {
+      info << "Hit: " << ihit << " Sample: " << isample << " Sample time: " 
+           << ds->GetMC()->GetMCHit(ihit)->GetMCSample(isample)->GetHitTime() << "\n";
+    }
+  }
   // Now loop over all triggers, collecting hits and samples
   for (int iev=0; iev<ds->GetEVCount(); iev++) {
     DS::EV* ev = ds->GetEV(iev);
+    info << "Event time: " << ev->GetUTC().GetNanoSec() << "\n";
     if (iev == 0) {
       ev->SetDeltaT(0);
     }
@@ -45,35 +52,35 @@ Processor::Result EventBuilderProc::DSEvent(DS::Root* ds) {
       ev->SetDeltaT(TimeDifference(ev->GetUTC(), ds->GetEV(iev-1)->GetUTC()));
     }
     ev->SetTotalCharge(0);
-    TTimeStamp triggerStopTime = AddNanoseconds(ev->GetUTC(), fTriggerDelay);
+    double triggerStopTime = ev->GetEventTime() +  fTriggerDelay;
     if (ds->GetMC()->GetMCHitCount() == 0) {
       continue;
     }
 
     // Loop over hits. firstSampleTime tells us the time of the first sample
     // in a given MCHit.
-    TTimeStamp firstSampleTime =
-      AddNanoseconds(ev->GetUTC(),
-                     ds->GetMC()->GetMCHit(0)->GetMCSample(0)->GetHitTime());
+    double firstSampleTime = ds->GetMC()->GetMCHit(0)->GetMCSample(0)->GetHitTime();
     info << "First sample time retrieved: " << firstSampleTime << " \n";
     int ihit = 0;
-    info <<"Hit count: " << ds->GetMC()->GetMCHitCount() << " triggerStopTime: " <<  triggerStopTime << " Difference: " << TimeDifference(triggerStopTime, firstSampleTime)<< " \n Hits: " << ds->GetMC()->GetMCHitCount() << " \n \n";
+    info <<"Hit count: " << ds->GetMC()->GetMCHitCount() << " triggerStopTime: " <<  triggerStopTime << " Difference: " 
+         << triggerStopTime -  firstSampleTime<< " \n Hits: " << ds->GetMC()->GetMCHitCount() << " \n \n";
+    Log::Assert(triggerStopTime > firstSampleTime, "EventBuilderProc: Trigger delay results in negative time difference. Lengthen delay in DAQ.ratdb");
     while (ihit < ds->GetMC()->GetMCHitCount() &&
-          (TimeDifference(triggerStopTime, firstSampleTime) >= 0)) { // >= -50)) {
+          triggerStopTime - firstSampleTime > 0) {
       DS::MCHit* hit = ds->GetMC()->GetMCHit(ihit);
       if (ihit % 20 == 0) {
         info << "Looping over hits. At: " << ihit << "\n";
       }
       // Advance through samples on this hit until we find the first one 
       // (if any) that is after the last trigger lockout time.
-      TTimeStamp nextSampleTime;
+      double nextSampleTime;
       int imcsample = 0;
       while (imcsample < hit->GetMCSampleCount()) {
         DS::MCSample* mcsample = hit->GetMCSample(imcsample);
 
         // If sample is inside gate, create a PMT data object and fill the
         // time and charge samples, as well as PMT information..
-        nextSampleTime = AddNanoseconds(ev->GetUTC(), mcsample->GetHitTime());
+        nextSampleTime = mcsample->GetHitTime();
 
         if ((triggerStopTime - nextSampleTime) < fTriggerGate &&
              nextSampleTime < triggerStopTime) {
@@ -83,10 +90,7 @@ Processor::Result EventBuilderProc::DSEvent(DS::Root* ds) {
           // Loop over the rest of the MC samples, filling PMT data samples
           // until we run out of the trigger gate.
           while (imcsample < hit->GetMCSampleCount() &&
-                 TimeDifference(
-                   triggerStopTime,
-                   AddNanoseconds(ev->GetUTC(),
-                                  hit->GetMCSample(imcsample)->GetHitTime())) > 0) {
+                   triggerStopTime - hit->GetMCSample(imcsample)->GetHitTime() > 0) {
             DS::Sample* sample = pmt->AddNewSample();
             double mctime = mcsample->GetHitTime();
             double mccharge = mcsample->GetCharge();
