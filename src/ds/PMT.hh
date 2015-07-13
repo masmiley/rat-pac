@@ -11,7 +11,6 @@
 #include <Rtypes.h>
 #include <RAT/DS/Sample.hh>
 
-
 namespace RAT {
   namespace DS {
 
@@ -25,8 +24,8 @@ public:
   virtual Int_t GetID() { return id; }
 
   /** Conventience method to get total charge in the waveform */
- virtual void SetCharge(Float_t _charge) { this->charge = _charge; }
- virtual inline Float_t GetCharge();
+  virtual void SetCharge(Float_t _charge) { this->charge = _charge; }
+  virtual inline Float_t GetCharge();
   
   /** Hit time in ns */
   virtual void SetTime(Float_t _time) { this->time = _time; }

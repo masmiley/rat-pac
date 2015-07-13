@@ -61,7 +61,7 @@ public:
   /** Total charge in all PMT waveforms (pC). */
   Float_t GetTotalCharge() const { return qTotal; }
   void SetTotalCharge(Float_t _qTotal) { qTotal = _qTotal; }
-  
+ 
   /** Centroid position fitter. */
   virtual Centroid* GetCentroid() {
     if (centroid.empty()) {

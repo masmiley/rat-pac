@@ -16,7 +16,7 @@
 namespace RAT {
 
 inline bool Cmp_MCHit_TimeAscending(DS::MCHit a, DS::MCHit b) {
-  return a.GetMCSample(0)->GetHitTime() <  b.GetMCSample(0)->GetHitTime();
+  return a.GetMCSample(0)->GetHitTime() < b.GetMCSample(0)->GetHitTime();
 }
 
 
@@ -33,26 +33,32 @@ EventBuilderProc::EventBuilderProc() : Processor("eventbuilder") {
 
 Processor::Result EventBuilderProc::DSEvent(DS::Root* ds) {
   Log::Assert(ds->ExistMC(), "EventBuilderProc: No MC information found.");
-  // First sort the MCHits
+ 
+ // First sort the MCHits
   ds->GetMC()->SortMCHit(Cmp_MCHit_TimeAscending);
-  for (int ihit = 0; ihit < ds->GetMC()->GetMCHitCount(); ihit++) {
-    for (int isample = 0; isample < ds->GetMC()->GetMCHit(ihit)->GetMCSampleCount(); isample++) {
-      info << "Hit: " << ihit << " Sample: " << isample << " Sample time: " 
-           << ds->GetMC()->GetMCHit(ihit)->GetMCSample(isample)->GetHitTime() << "\n";
-    }
-  }
+  // for (int ihit = 0; ihit < ds->GetMC()->GetMCHitCount(); ihit++) {
+  //  for (int isample = 0; isample < ds->GetMC()->GetMCHit(ihit)->GetMCSampleCount(); isample++) {
+  //    info << "Hit: " << ihit << " Sample: " << isample << " Sample time: " 
+  //         << ds->GetMC()->GetMCHit(ihit)->GetMCSample(isample)->GetHitTime() << "\n";
+  //  }
+  //}
   // Now loop over all triggers, collecting hits and samples
   for (int iev=0; iev<ds->GetEVCount(); iev++) {
     DS::EV* ev = ds->GetEV(iev);
-    info << "Event time: " << ev->GetUTC().GetNanoSec() << "\n";
+    info <<"iev: " << iev <<  "Event time: " << ev->GetUTC().GetNanoSec() << "\n";
+
+    //Set DeltaT for ev
     if (iev == 0) {
       ev->SetDeltaT(0);
     }
     else {
       ev->SetDeltaT(TimeDifference(ev->GetUTC(), ds->GetEV(iev-1)->GetUTC()));
+      //info << "EV time difference: " << TimeDifference(ev->GetUTC(), ds->GetEV(iev-1)->GetUTC()) << "\n";
     }
+
     ev->SetTotalCharge(0);
     double triggerStopTime = ev->GetEventTime() +  fTriggerDelay;
+   
     if (ds->GetMC()->GetMCHitCount() == 0) {
       continue;
     }
@@ -64,10 +70,10 @@ Processor::Result EventBuilderProc::DSEvent(DS::Root* ds) {
     int ihit = 0;
     info <<"Hit count: " << ds->GetMC()->GetMCHitCount() << " triggerStopTime: " <<  triggerStopTime << " Difference: " 
          << triggerStopTime -  firstSampleTime<< " \n Hits: " << ds->GetMC()->GetMCHitCount() << " \n \n";
-    Log::Assert(triggerStopTime > firstSampleTime, "EventBuilderProc: Trigger delay results in negative time difference. Lengthen delay in DAQ.ratdb");
     while (ihit < ds->GetMC()->GetMCHitCount() &&
-          triggerStopTime - firstSampleTime > 0) {
+           firstSampleTime < triggerStopTime) {
       DS::MCHit* hit = ds->GetMC()->GetMCHit(ihit);
+
       if (ihit % 20 == 0) {
         info << "Looping over hits. At: " << ihit << "\n";
       }
@@ -104,6 +110,7 @@ Processor::Result EventBuilderProc::DSEvent(DS::Root* ds) {
           imcsample++;
         }
       }
+
      // info << "Setting first sample time again";
       if (ihit < ds->GetMC()->GetMCHitCount()) {
         firstSampleTime = hit->GetMCSample(0)->GetHitTime();
@@ -125,7 +132,7 @@ double EventBuilderProc::DigitizeT(double hitTime, double stopTime) {
 
 // Eventually this will have to return a 12-bit integer,
 // in ADC counts
- float EventBuilderProc::DigitizeQ(float hitCharge) {
+float EventBuilderProc::DigitizeQ(float hitCharge) {
   return hitCharge;
 }
 

@@ -19,7 +19,7 @@ public:
   MCHit() {}
   virtual ~MCHit() {}
 
-  virtual  Int_t GetPMTID() const  { return pmtID; }
+  virtual Int_t GetPMTID() const { return pmtID; }
   virtual void SetPMTID(Int_t _pmtID) { pmtID = _pmtID; }
 
   virtual Int_t GetCrate() const { return crate; }
@@ -31,7 +31,7 @@ public:
   virtual Int_t GetChannel() const { return channel; }
   virtual void SetChannel(Int_t _channel) { channel = _channel; }
 
-  virtual MCSample* GetMCSample(Int_t i)  { return &sample.at(i); }
+  virtual MCSample* GetMCSample(Int_t i) { return &sample.at(i); }
   virtual Int_t GetMCSampleCount() const { return sample.size(); }
   virtual MCSample* AddNewMCSample() {
     sample.resize(sample.size() + 1);

@@ -34,7 +34,8 @@ FrontEndProc::FrontEndProc() : Processor("frontend") {
 
 Processor::Result FrontEndProc::DSEvent(DS::Root* ds) {
   Log::Assert(ds->ExistMC(), "FrontEndProc: No MC information found.");
-  bool isHit = false;
+  
+  //bool isHit = false;
   // Outer loop is over all hit MCPMTs
   int pmtCount = ds->GetMC()->GetMCPMTCount();
   for (int ipmt=0; ipmt<pmtCount; ipmt++) {
@@ -48,27 +49,28 @@ Processor::Result FrontEndProc::DSEvent(DS::Root* ds) {
     for (int iphoton=0; iphoton<photonCount; iphoton++) {
       DS::MCPhoton* photon = pmt->GetMCPhoton(iphoton);
       double timeNow = photon->GetHitTime();
-     if (!isHit) {
-      info << dformat("PMT count: %d Photon count: %d PMT: %d Photon: %d \n", pmtCount, photonCount, ipmt, iphoton) 
-           << dformat("timeNow: %f \n", timeNow);
-      }
+     
+      //if (iphoton > 2) {
+      //info << dformat("PMT count: %d Photon count: %d PMT: %d Photon: %d \n", pmtCount, photonCount, ipmt, iphoton) 
+      //    << dformat("timeNow: %f \n", timeNow);
+      //}
       // Now we check how many pulses before our current pulse contribute
       // to the total seen by the front end discriminator
       int sumIndex = iphoton;
       double deltaT = 0;
       double charge = photon->GetCharge();
-     // if (!isHit) {
-     //  info  << dformat("Before loop sumIndex : %d  \n", sumIndex) << "Charge: " << charge << " Photon get charge: " << photon->GetCharge() << "\n";
-     // }
+      //if (iphoton > 2) {
+      // info  << dformat("Before loop sumIndex : %d  \n", sumIndex) << "Charge: " << charge << "\n";
+      //}
       while (deltaT <= fPulseWidth && sumIndex > 0) {
          sumIndex--;
          charge += pmt->GetMCPhoton(sumIndex)->GetCharge();
          deltaT = timeNow - pmt->GetMCPhoton(sumIndex)->GetHitTime();
       }
-     //if (!isHit) {
-     //   info << dformat("After loop  sumIndex : %d \n", sumIndex)
-     //        << dformat("Charge: %f PE", charge) << dformat("     deltaT: %f ns\n", deltaT);
-     // }
+      //if (iphoton > 2) {
+      //  info << dformat("After loop  sumIndex : %d \n", sumIndex)
+      //       << dformat("Charge: %f PE", charge) << dformat("     deltaT: %f ns\n", deltaT);
+      //}
 
       // Now add some noise to the sum, and check it against threshold
       float qfuzzed = charge + fNoiseAmpl * CLHEP::RandGauss::shoot();
@@ -90,42 +92,46 @@ Processor::Result FrontEndProc::DSEvent(DS::Root* ds) {
 
         // Time of photon which crossed threshold
         sample->SetHitTime(timeNow);
-        if (ds->GetMC()->GetMCHitCount() == 1) {
-          info << "Sample time: " <<  sample->GetHitTime()<< "\n";
-          isHit = true;
-        }
-        double timeStartGate = timeNow - fGDelay;
-        //if (photonCount > 1) {
-        //   info << "Time Now: " << timeNow << " Gate start: " << timeStartGate << "Difference: " << timeNow - timeStartGate << " \n";
+        //if (iphoton > 2) {
+        //  info << "Sample time: " <<  sample->GetHitTime()<< "\n";
+          //isHit = true;
         //}
+        double timeStartGate = timeNow - fGDelay;
+       
         // Loop backwards until we're at the beginning of the gate
         int hitIndex = iphoton;
         double pmttime = timeNow;
+        //if (iphoton  > 2) {
+        //   info << "Time Now: " << timeNow << " Gate start: " << timeStartGate << " pmttime: " << pmttime << " hitIndex: " << hitIndex << " \n";
+        //}
         if (hitIndex > 0) {
           while (pmttime >= timeStartGate && hitIndex > 0) {
             hitIndex--;
             pmttime = pmt->GetMCPhoton(hitIndex)->GetHitTime();
           }
-
           // One step forward so we're inside gate
           hitIndex++;
         }
-
+        //if (iphoton > 2) {
+        //   info << "hitIndex beginning: "<< hitIndex-1 <<  " hitIndex+1: " << hitIndex 
+        //        << "\n  pmttime beginning: " << pmttime << " pmttime+1: " << pmt->GetMCPhoton(hitIndex)->GetHitTime() << " \n"
+        //        << "timeStartGate + fSamplingTime: " << timeStartGate + fSamplingTime << " \n";
+        //}
         pmttime = pmt->GetMCPhoton(hitIndex)->GetHitTime();
         sample->SetCharge(0);
-       // if (photonCount > 1) {
-        // info << "pmttime: " << pmttime << " timeStartGate + fSamplingTime: " << timeStartGate + fSamplingTime << "\n hitIndex: " << hitIndex
-        //      << " Photon count " << pmt->GetMCPhotonCount() - 1 << " \n";
-       // }
+
         // Now loop forward until the integration gate closes
         while (pmttime <= timeStartGate + fSamplingTime &&
-               hitIndex < pmt->GetMCPhotonCount()) {// - 1) {
+               hitIndex < pmt->GetMCPhotonCount()) {
           sample->SetCharge(sample->GetCharge() +
                             pmt->GetMCPhoton(hitIndex)->GetCharge()); 
           hitIndex++;
           if (hitIndex < pmt->GetMCPhotonCount()) {
            pmttime = pmt->GetMCPhoton(hitIndex)->GetHitTime();
           }
+          //if (iphoton > 2) {
+          //  info << "hitIndex: " << hitIndex << " pmttime: " << pmttime << "\n";
+          //}
         }
 
         // Skip to the last hit sampled

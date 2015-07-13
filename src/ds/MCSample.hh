@@ -17,7 +17,7 @@ public:
   MCSample() {}
   virtual ~MCSample() {}
 
-  virtual Double_t GetHitTime() const { return hitTime; }
+  virtual Double_t  GetHitTime() const { return hitTime; }
   virtual void SetHitTime(Double_t _hitTime) { hitTime = _hitTime; }
 
   virtual Double_t GetCharge() const { return charge; }

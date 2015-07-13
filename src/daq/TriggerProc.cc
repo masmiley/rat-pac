@@ -25,9 +25,9 @@ TriggerProc::TriggerProc() : Processor("trigger") {
   fEventCount = 0;
   DBLinkPtr ldaq = DB::Get()->GetLink("DAQ");
 
-   fTrigLockout = ldaq->GetD("lockout");
-   fNHITPulseWidth = ldaq->GetD("nhit_width");
-   fNThreshold = ldaq->GetD("nhit_thresh");
+  fTrigLockout = ldaq->GetD("lockout");
+  fNHITPulseWidth = ldaq->GetD("nhit_width");
+  fNThreshold = ldaq->GetD("nhit_thresh");
 
   info << dformat(" NHIT Threshold       : %3.1f hits\n", fNThreshold)
        << dformat(" Trigger Lockout Time : %3.1f ns\n", fTrigLockout)
@@ -46,7 +46,9 @@ TriggerProc::Result TriggerProc::DSEvent(DS::Root* ds) {
   for (int ihit=0; ihit<hitCount; ihit++) {
     DS::MCHit* hit = ds->GetMC()->GetMCHit(ihit);
     int sampleCount = hit->GetMCSampleCount();
+    info << "Sample count: " << sampleCount << "\n";
     double lastTime = -DBL_MAX;
+   
     // Now loop over samples, and create a trigger pulse each time there is
     // a new sample more than PulseWidthDB from the last (ie, allow retriggers)
     for (int isample=0; isample<sampleCount; isample++) {
@@ -59,9 +61,8 @@ TriggerProc::Result TriggerProc::DSEvent(DS::Root* ds) {
         npulse->SetHeight(1.0);
         npulse->SetWidth(fNHITPulseWidth);
        
-        info <<"Hit: " << ihit <<  "Sample: " << isample << " Pulse start time: " << npulse->GetStartTime() 
-             << " Time input: " << sample->GetHitTime()  << "\n"; 
-       
+        info <<"Hit: " << ihit <<  "Sample: " << isample << " Pulse start time: " << npulse->GetStartTime() << "\n"; 
+
         nsum.pulse.push_back(npulse);
         lastTime = sample->GetHitTime();
       }
@@ -83,7 +84,8 @@ TriggerProc::Result TriggerProc::DSEvent(DS::Root* ds) {
     lastTime = nsum.pulse[0]->GetStartTime();
     for (size_t i=0; i<nsum.pulse.size(); i++) {
       double sorttime = nsum.pulse[i]->GetStartTime();
-      info << "Pulse: " << i << " Pulse time: " << nsum.pulse[i]->GetStartTime() << "\n";
+     // info << "Pulse: " << i << " Pulse time: " << nsum.pulse[i]->GetStartTime() << "\n";
+     // info << "Last time: " << lastTime << " Sort time: " << sorttime << "\n";
       if (sorttime > lastTime) {
         float sum = nsum.GetHeight(i); // Gives height for sum up to pulse i
         if (sum > fNThreshold) {
@@ -93,6 +95,7 @@ TriggerProc::Result TriggerProc::DSEvent(DS::Root* ds) {
                                     nsum.pulse[i]->GetStartTime()));
           ev->SetEventTime(nsum.pulse[i]->GetStartTime());
           info << "Triggering pulse: " << i << " Pulse time: " << nsum.pulse[i]->GetStartTime() << " EV time: " << ev->GetUTC().GetNanoSec() << "\n";
+         
           // Step to first hit after trigger lockout time
           lastTime = nsum.pulse[i]->GetStartTime() + fTrigLockout;
 
