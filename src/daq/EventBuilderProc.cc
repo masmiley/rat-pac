@@ -97,11 +97,10 @@ Processor::Result EventBuilderProc::DSEvent(DS::Root* ds) {
           imcsample++;
         }
       }
-
+      ihit++;
       if (ihit < ds->GetMC()->GetMCHitCount()) {
         firstSampleTime = hit->GetMCSample(0)->GetHitTime();
       }
-      ihit++;
     }
   }
 
