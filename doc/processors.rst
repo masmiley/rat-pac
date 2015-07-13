@@ -170,8 +170,8 @@ Command
 
 Parameters
 ''''''''''
-None. Configurable via DAQ RATDB table: sampling time, channel threshold,
-trigger pulse width, trigger noise amplitude, and the trigger gate delay.
+None. Configurable via DAQ RATDB table: sampling time (sampling_time), channel threshold (chan_thresh),
+trigger pulse width (pulse_width), trigger noise amplitude (noise_amplitude), and the trigger gate delay (gate_delay).
 
 trigger
 ```````
@@ -197,8 +197,8 @@ Command
 
 Parameters
 ''''''''''
-None. The length of the trigger window, width of the trigger pulses, and the
-Nhit threshold are adjustable via parameters in the DAQ table;
+None. The length of the trigger window (lockout), width of the trigger pulses (nhit width), and the
+Nhit threshold (nhit_thresh) are adjustable via parameters in the DAQ table;
 see DAQ.ratdb.
 
 eventbuilder
@@ -218,6 +218,6 @@ Command
 
 Parameters
 ''''''''''
-None. Configurable via DAQ RATDB: delay of trigger back to the front end and
-the width of the trigger gate within which to collect hits.
+None. Configurable via DAQ RATDB: delay of trigger back to the front end (trigger_delay) and
+the width of the trigger gate within which to collect hits (trigger_gate).
 

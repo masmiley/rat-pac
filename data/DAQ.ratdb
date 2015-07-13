@@ -2,6 +2,24 @@
 name: "DAQ",
 valid_begin: [0, 0],
 valid_end: [0, 0],
+
+//All fields in ns unless stated
+// Front End processor settings
 channel_efficiency: 1.0d,
+sampling_time: 410.0d,
+chan_thresh: 0.25d, //pe
+pulse_width: 15.0d,
+noise_amplitude: 0.1d, //pe
+gate_delay: 10.0d,
+
+// Trigger processor settings
+lockout: 400.0d,
+nhit_width: 100.0d,
+nhit_thresh: 2.0d, //Hits
+
+// Event Builder processor settings
+trigger_delay: 110.0d,
+trigger_gate: 440.0d,
+
 }
 
