@@ -46,7 +46,6 @@ TriggerProc::Result TriggerProc::DSEvent(DS::Root* ds) {
   for (int ihit=0; ihit<hitCount; ihit++) {
     DS::MCHit* hit = ds->GetMC()->GetMCHit(ihit);
     int sampleCount = hit->GetMCSampleCount();
-    info << "Sample count: " << sampleCount << "\n";
     double lastTime = -DBL_MAX;
    
     // Now loop over samples, and create a trigger pulse each time there is
@@ -60,8 +59,6 @@ TriggerProc::Result TriggerProc::DSEvent(DS::Root* ds) {
         npulse->SetStartTime(sample->GetHitTime());
         npulse->SetHeight(1.0);
         npulse->SetWidth(fNHITPulseWidth);
-       
-        info <<"Hit: " << ihit <<  "Sample: " << isample << " Pulse start time: " << npulse->GetStartTime() << "\n"; 
 
         nsum.pulse.push_back(npulse);
         lastTime = sample->GetHitTime();
@@ -84,8 +81,6 @@ TriggerProc::Result TriggerProc::DSEvent(DS::Root* ds) {
     lastTime = nsum.pulse[0]->GetStartTime();
     for (size_t i=0; i<nsum.pulse.size(); i++) {
       double sorttime = nsum.pulse[i]->GetStartTime();
-     // info << "Pulse: " << i << " Pulse time: " << nsum.pulse[i]->GetStartTime() << "\n";
-     // info << "Last time: " << lastTime << " Sort time: " << sorttime << "\n";
       if (sorttime > lastTime) {
         float sum = nsum.GetHeight(i); // Gives height for sum up to pulse i
         if (sum > fNThreshold) {
@@ -94,7 +89,6 @@ TriggerProc::Result TriggerProc::DSEvent(DS::Root* ds) {
           ev->SetUTC(AddNanoseconds(ds->GetMC()->GetUTC(),
                                     nsum.pulse[i]->GetStartTime()));
           ev->SetEventTime(nsum.pulse[i]->GetStartTime());
-          info << "Triggering pulse: " << i << " Pulse time: " << nsum.pulse[i]->GetStartTime() << " EV time: " << ev->GetUTC().GetNanoSec() << "\n";
          
           // Step to first hit after trigger lockout time
           lastTime = nsum.pulse[i]->GetStartTime() + fTrigLockout;

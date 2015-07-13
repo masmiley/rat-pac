@@ -34,18 +34,12 @@ EventBuilderProc::EventBuilderProc() : Processor("eventbuilder") {
 Processor::Result EventBuilderProc::DSEvent(DS::Root* ds) {
   Log::Assert(ds->ExistMC(), "EventBuilderProc: No MC information found.");
  
- // First sort the MCHits
+  // First sort the MCHits
   ds->GetMC()->SortMCHit(Cmp_MCHit_TimeAscending);
-  // for (int ihit = 0; ihit < ds->GetMC()->GetMCHitCount(); ihit++) {
-  //  for (int isample = 0; isample < ds->GetMC()->GetMCHit(ihit)->GetMCSampleCount(); isample++) {
-  //    info << "Hit: " << ihit << " Sample: " << isample << " Sample time: " 
-  //         << ds->GetMC()->GetMCHit(ihit)->GetMCSample(isample)->GetHitTime() << "\n";
-  //  }
-  //}
+  
   // Now loop over all triggers, collecting hits and samples
   for (int iev=0; iev<ds->GetEVCount(); iev++) {
     DS::EV* ev = ds->GetEV(iev);
-    info <<"iev: " << iev <<  "Event time: " << ev->GetUTC().GetNanoSec() << "\n";
 
     //Set DeltaT for ev
     if (iev == 0) {
@@ -53,7 +47,6 @@ Processor::Result EventBuilderProc::DSEvent(DS::Root* ds) {
     }
     else {
       ev->SetDeltaT(TimeDifference(ev->GetUTC(), ds->GetEV(iev-1)->GetUTC()));
-      //info << "EV time difference: " << TimeDifference(ev->GetUTC(), ds->GetEV(iev-1)->GetUTC()) << "\n";
     }
 
     ev->SetTotalCharge(0);
@@ -66,17 +59,11 @@ Processor::Result EventBuilderProc::DSEvent(DS::Root* ds) {
     // Loop over hits. firstSampleTime tells us the time of the first sample
     // in a given MCHit.
     double firstSampleTime = ds->GetMC()->GetMCHit(0)->GetMCSample(0)->GetHitTime();
-    info << "First sample time retrieved: " << firstSampleTime << " \n";
     int ihit = 0;
-    info <<"Hit count: " << ds->GetMC()->GetMCHitCount() << " triggerStopTime: " <<  triggerStopTime << " Difference: " 
-         << triggerStopTime -  firstSampleTime<< " \n Hits: " << ds->GetMC()->GetMCHitCount() << " \n \n";
     while (ihit < ds->GetMC()->GetMCHitCount() &&
            firstSampleTime < triggerStopTime) {
       DS::MCHit* hit = ds->GetMC()->GetMCHit(ihit);
 
-      if (ihit % 20 == 0) {
-        info << "Looping over hits. At: " << ihit << "\n";
-      }
       // Advance through samples on this hit until we find the first one 
       // (if any) that is after the last trigger lockout time.
       double nextSampleTime;
@@ -96,7 +83,7 @@ Processor::Result EventBuilderProc::DSEvent(DS::Root* ds) {
           // Loop over the rest of the MC samples, filling PMT data samples
           // until we run out of the trigger gate.
           while (imcsample < hit->GetMCSampleCount() &&
-                   triggerStopTime - hit->GetMCSample(imcsample)->GetHitTime() > 0) {
+                 hit->GetMCSample(imcsample)->GetHitTime() < triggerStopTime) {
             DS::Sample* sample = pmt->AddNewSample();
             double mctime = mcsample->GetHitTime();
             double mccharge = mcsample->GetCharge();
@@ -111,11 +98,9 @@ Processor::Result EventBuilderProc::DSEvent(DS::Root* ds) {
         }
       }
 
-     // info << "Setting first sample time again";
       if (ihit < ds->GetMC()->GetMCHitCount()) {
         firstSampleTime = hit->GetMCSample(0)->GetHitTime();
       }
-     // info << "Successful set time";
       ihit++;
     }
   }
