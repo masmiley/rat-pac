@@ -10,9 +10,9 @@ valid_end: [0, 0],
 photocathode_coverage: 0.90,
 veto_coverage: 0.00,
 
-fiducial_diameter: 40000.0,
-fiducial_height: 40000.0,
-fiducial_buffer: 2000.0,
+fiducial_diameter: 31748.0, //40000.0
+fiducial_height: 31748.0, //40000.0
+fiducial_buffer: 1587.4, //2000.0,
 
 wall_thickness: 10.0,
 
