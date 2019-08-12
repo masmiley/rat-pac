@@ -238,6 +238,7 @@ void Gsim::EndOfRunAction(const G4Run* /*arun*/) {
 
 void Gsim::BeginOfEventAction(const G4Event* anEvent) {
   GLG4Scint::ResetTotEdep();
+  GLG4Scint::ResetPhotonCount();
 
   // Clearing theHitPMTCollection clears away the HitPhotons and HitPMTs
   GLG4VEventAction::GetTheHitPMTCollection()->Clear();  
@@ -329,6 +330,9 @@ void Gsim::PreUserTrackingAction(const G4Track* aTrack)  {
     }
     else if (creatorProcessName == "Reemission") {
       eventInfo->numReemitPhoton++;
+    }
+    else if (creatorProcessName == "Cerenkov") {
+      eventInfo->numCerenkovPhoton++;
     }
   }
 }
@@ -505,8 +509,12 @@ void Gsim::MakeEvent(const G4Event* g4ev, DS::Root* ds) {
   const G4ThreeVector sCentroid = GLG4Scint::GetScintCentroid();
   TVector3 scintCentroid(sCentroid.x(), sCentroid.y(), sCentroid.z());
   summary->SetTotalScintCentroid(scintCentroid);
-  summary->SetNumScintPhoton(exinfo->numScintPhoton);
-  summary->SetNumReemitPhoton(exinfo->numReemitPhoton);
+  summary->SetNumScintPhoton(GLG4Scint::GetScintillatedPhotonCount());
+  summary->SetNumReemitPhoton(GLG4Scint::GetReemittedPhotonCount());
+  summary->SetNumReemitPhoton0(GLG4Scint::GetReemittedPhotonCount0());
+  summary->SetNumReemitPhoton1(GLG4Scint::GetReemittedPhotonCount1());
+  summary->SetNumReemitPhoton2(GLG4Scint::GetReemittedPhotonCount2());
+  summary->SetNumCerenkovPhoton(exinfo->numCerenkovPhoton);
 
   /** PMT and noise simulation */
   GLG4HitPMTCollection* hitpmts = GLG4VEventAction::GetTheHitPMTCollection();

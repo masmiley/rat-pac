@@ -11,6 +11,7 @@
 #include <G4UImessenger.hh>
 
 class G4UIcmdWithAString;
+class G4UIcmdWithABool;
 
 namespace RAT {
 
@@ -28,6 +29,7 @@ public:
 
 protected:
   G4UIcmdWithAString* fSetOpWLSCmd;
+  G4UIcmdWithABool* fDisableCerenkovCmd;
 };
   
 }  // namespace RAT
