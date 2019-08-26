@@ -1,6 +1,6 @@
-// ESCrossSec.cc
-// Contact person: Nuno Barros <nfbarros@hep.upenn.edu>
-// See ESCrossSec.hh for more details
+// CCCrossSec.cc
+// Contact person: Max Smiley <masmiley@berkeley.edu>
+// See CCCrossSec.hh for more details
 //———————————————————————//
 
 // -- Geant4 includes
@@ -10,8 +10,8 @@
 
 // -- RAT includes
 #include <RAT/DB.hh>
-#include <RAT/ESCrossSec.hh>
-#include <RAT/ESCrossSecMessenger.hh>
+#include <RAT/CCCrossSec.hh>
+#include <RAT/CCCrossSecMessenger.hh>
 #include <RAT/Log.hh>
 
 // -- ROOT includes
@@ -34,37 +34,37 @@ namespace RAT {
 // provided from Geant4/CLHEP
  */
 
-const double  RAT::ESCrossSec::fGf    = 1.166371e-5;        	// Fermi constant (GeV^-2)
-const double  RAT::ESCrossSec::fhbarc = hbarc*1e12; 			// hbar*c (MeV*fm)
-const double  RAT::ESCrossSec::fhbarc2= fhbarc*fhbarc*1e-5; 	// hbar*c^2(GeV^2 mb)
-const double  RAT::ESCrossSec::falpha = fine_structure_const;   //
+const double  RAT::CCCrossSec::fGf    = 1.166371e-5;        	// Fermi constant (GeV^-2)
+const double  RAT::CCCrossSec::fhbarc = hbarc*1e12; 			// hbar*c (MeV*fm)
+const double  RAT::CCCrossSec::fhbarc2= fhbarc*fhbarc*1e-5; 	// hbar*c^2(GeV^2 mb)
+const double  RAT::CCCrossSec::falpha = fine_structure_const;   //
 
 
 /**
  * Some other static constants that are valid for all instances of the class.
  * Limits for which the table should not be trusted (the interpolation is not as efficient).
  */
-const double RAT::ESCrossSec::fTableTeMin = 0.05;
-const double RAT::ESCrossSec::fTableTeMax = 0.95;
+const double RAT::CCCrossSec::fTableTeMin = 0.05;
+const double RAT::CCCrossSec::fTableTeMax = 0.95;
 
 /**
  * The weak mixing angle (\f$ \sin^{2}\theta_{W}\f$) is declared only as static
  * (no const modifier) as it can be changed by macro command.
  * This change should reflect all instances of the class.
  */
-double RAT::ESCrossSec::fsinthetaW2 = 0.23116;
+double RAT::CCCrossSec::fsinthetaW2 = 0.23116;
 
-ESCrossSec::ESCrossSec(const char* flavor)
+CCCrossSec::CCCrossSec(const char* flavor)
 {
 	fReactionStr = flavor;
 	Defaults();
 
 	// Messenger to override some parameters
-	fMessenger = new ESCrossSecMessenger(this);
+	fMessenger = new CCCrossSecMessenger(this);
 
 }
 
-ESCrossSec::~ESCrossSec()
+CCCrossSec::~CCCrossSec()
 {
 
 	if (fMessenger != NULL) {
@@ -74,7 +74,7 @@ ESCrossSec::~ESCrossSec()
 
 }
 
-void ESCrossSec::Defaults()
+void CCCrossSec::Defaults()
 {
 	// load default parameters
 
@@ -123,7 +123,7 @@ void ESCrossSec::Defaults()
 
 
 /// Calculates total cross section for a given neutrino energy
-double ESCrossSec::Sigma(const double Enu) const
+double CCCrossSec::Sigma(const double Enu) const
 {
 	// return total cross section in units cm^-42
 	// for laboratory neutrino energy Enu
@@ -178,7 +178,7 @@ double ESCrossSec::Sigma(const double Enu) const
 				// no support for nuebar and numubar
 				// in tables
 				std::stringstream ss;
-				ss << "[ESCrossSec]::Sigma : " << fReactionStr
+				ss << "[CCCrossSec]::Sigma : " << fReactionStr
 					<< " not supported with Radiative correction strategy "
 					<< fRadiativeCorrection << " !!";
 				RAT::Log::Die(ss.str(),1);
@@ -211,18 +211,18 @@ double ESCrossSec::Sigma(const double Enu) const
 	// Should never reach this point
 	// Throw an exception if that happens
 	std::stringstream ss;
-	ss << "[ESCrossSec]::Sigma : Reached end of function while calculating Sigma. Something is wrong with the calculation.\n";
+	ss << "[CCCrossSec]::Sigma : Reached end of function while calculating Sigma. Something is wrong with the calculation.\n";
 
-	ss << "[ESCrossSec]::Sigma : Current parameters : Calculation Strategy : [ "
+	ss << "[CCCrossSec]::Sigma : Current parameters : Calculation Strategy : [ "
 			<< fRadiativeCorrection << " ], Reaction : [ " << fReactionStr << " ].\n";
-	ss << "[ESCrossSec]::Sigma : Enu : [ " << Enu << " ], TeMax  : [ "
+	ss << "[CCCrossSec]::Sigma : Enu : [ " << Enu << " ], TeMax  : [ "
 			<<  Temax << " ].";
 	RAT::Log::Die(ss.str(),1);
 	throw;
 }
 
 //--------------------------------------
-double ESCrossSec::SigmaLab(const double elab) const
+double CCCrossSec::SigmaLab(const double elab) const
 {
 	return Sigma(elab);
 }
@@ -230,7 +230,7 @@ double ESCrossSec::SigmaLab(const double elab) const
 //--------------------------------------
 // Differential cross-section calculation
 
-double ESCrossSec::dSigmadT(const double Enu,const double Te) const
+double CCCrossSec::dSigmadT(const double Enu,const double Te) const
 {
 	// Differential cross section
 	//  d Sigma
@@ -292,14 +292,14 @@ double ESCrossSec::dSigmadT(const double Enu,const double Te) const
 
 		if ( k1 < 0 || k2 < 0 ) {
 			std::stringstream ss;
-			warn << "[ESCrossSec]::dSigmadT : Got invalid values for variables k_i: k1 " << k1
+			warn << "[CCCrossSec]::dSigmadT : Got invalid values for variables k_i: k1 " << k1
 					<< " k2 " << k2 << newline;
 
-			warn << "[ESCrossSec]::dSigmadT : Enu : [ " << Enu << " ], Te  : [ "
+			warn << "[CCCrossSec]::dSigmadT : Enu : [ " << Enu << " ], Te  : [ "
 					<<  Te << " ] " << " fEnuStepDif : " << fEnuStepDif << "\n\n" << newline;
 
 
-            Log::Die("[ESCrossSec]::dSigmadT : Got invalid values for variables k_i: k1 " + util_to_string(k1) + " k2 " + util_to_string(k2));
+            Log::Die("[CCCrossSec]::dSigmadT : Got invalid values for variables k_i: k1 " + util_to_string(k1) + " k2 " + util_to_string(k2));
 		}
 
 		double e1 = fEnuStepDif * (double) (k1+1);
@@ -335,10 +335,10 @@ double ESCrossSec::dSigmadT(const double Enu,const double Te) const
 				sig_e2_t1 = fTableDif[(k1+1) * fNDataDif + k2];
 				sig_e2_t2 = fTableDif[(k1+1) * fNDataDif + k2+1];
 			} else {
-				warn << "[ESCrossSec]::dSigmadT : " << fReactionStr
+				warn << "[CCCrossSec]::dSigmadT : " << fReactionStr
 						<< " not supported with Radiative correction strategy "
 						<< fRadiativeCorrection << " !!" << newline;
-                Log::Die("[ESCrossSec]::dSigmadT : " + fReactionStr
+                Log::Die("[CCCrossSec]::dSigmadT : " + fReactionStr
 						+ " not supported with Radiative correction strategy "
 						+ util_to_string(fRadiativeCorrection) + " !!");
 			}
@@ -375,9 +375,9 @@ double ESCrossSec::dSigmadT(const double Enu,const double Te) const
 				// To avoid log(-1.0e15) in fm,fpz,fpm when Te = Temax
 				if (1.0-z-fMe/(E+el) <= 0.0) {
 #ifdef RATDEBUG
-					debug << "[ESCrossSec]::dSigmadT :  warning: 1.0-z-fMe/(E+el) = "
+					debug << "[CCCrossSec]::dSigmadT :  warning: 1.0-z-fMe/(E+el) = "
 							<< 1.0-z-fMe/(E+el) << newline;
-					debug << "[ESCrossSec]::dSigmadT : Enu = " << Enu << " Te = " <<Te << newline;
+					debug << "[CCCrossSec]::dSigmadT : Enu = " << Enu << " Te = " <<Te << newline;
 #endif
 					return 0.0;
 				}
@@ -401,10 +401,10 @@ double ESCrossSec::dSigmadT(const double Enu,const double Te) const
 					gr = -pnc * kappa * fsinthetaW2;
 
 				} else {
-					warn << "[ESCrossSec]::dSigmadT : " << fReactionStr
+					warn << "[CCCrossSec]::dSigmadT : " << fReactionStr
 							<< " not supported with Radiative correction strategy "
 							<< fRadiativeCorrection << " !!" << newline;
-                    Log::Die("[ESCrossSec]::dSigmadT : " + fReactionStr
+                    Log::Die("[CCCrossSec]::dSigmadT : " + fReactionStr
 							+ " not supported with Radiative correction strategy "
 							+ util_to_string(fRadiativeCorrection) + " !!");
 					// not supported yet
@@ -417,7 +417,6 @@ double ESCrossSec::dSigmadT(const double Enu,const double Te) const
 				double fpm = 0.0;
 
 				if (fRadiativeCorrection != 2) {
-					double  fL(double x);
 					fm = (E/el * log((E+el)/fMe)-1.0) *
 							(2.0*log(1.0-z-fMe/(E+el))
 					- log(1.0-z) - 0.5*log(z) - 5.0/12.0) + 0.5 *
@@ -451,25 +450,25 @@ double ESCrossSec::dSigmadT(const double Enu,const double Te) const
 				return   dsigma_dT * fhbarc2 * 1.0e9;
 			}
 		} else {
-			warn << "[ESCrossSec]::dSigmadT : Got invalid values for variables k_i: k1 " << k1
+			warn << "[CCCrossSec]::dSigmadT : Got invalid values for variables k_i: k1 " << k1
 					<< " k2 " << k2 << newline;
-            Log::Die("[ESCrossSec]::dSigmadT : Got invalid values for variables k_i: k1 " + util_to_string(k1) + " k2 " + util_to_string(k2));
+            Log::Die("[CCCrossSec]::dSigmadT : Got invalid values for variables k_i: k1 " + util_to_string(k1) + " k2 " + util_to_string(k2));
 		}
 
 	}
 
-	warn << "[ESCrossSec]::dSigmadT > Reached end of function while calculating dSigmadT. Something is wrong with the calculation." << newline;
-	warn << "[ESCrossSec]::dSigmadT > Current parameters : Calculation Strategy : [ "
+	warn << "[CCCrossSec]::dSigmadT > Reached end of function while calculating dSigmadT. Something is wrong with the calculation." << newline;
+	warn << "[CCCrossSec]::dSigmadT > Current parameters : Calculation Strategy : [ "
 			<< fRadiativeCorrection << " ], Reaction : [ " << fReactionStr << " ] " << newline;
-	warn << "[ESCrossSec]::dSigmadT > Enu : [ " << Enu << " ], Te  : [ "
+	warn << "[CCCrossSec]::dSigmadT > Enu : [ " << Enu << " ], Te  : [ "
 			<<  Te << " ], TeMax  : [ "  <<  Temax << " ] " << newline;
-	warn << "[ESCrossSec]::dSigmadT > k1 : " << k1 << " k2 : " << k2 << " fEnuStepDif : " << fEnuStepDif << newline;
+	warn << "[CCCrossSec]::dSigmadT > k1 : " << k1 << " k2 : " << k2 << " fEnuStepDif : " << fEnuStepDif << newline;
     Log::Die("Failed calculation of dSigmadT.");
 	return 0.0;
 
 }
 
-double ESCrossSec::IntegraldSigmadT(const double Enu,const double T1,const double T2) const
+double CCCrossSec::IntegraldSigmadT(const double Enu,const double T1,const double T2) const
 {
 	// Integrate dSigma/dT of Enu from T1 to T2
 
@@ -498,7 +497,7 @@ double ESCrossSec::IntegraldSigmadT(const double Enu,const double T1,const doubl
 //--------------------------------------
 
 
-double ESCrossSec::dSigmadCosTh(const double Enu,const double CosTh) const
+double CCCrossSec::dSigmadCosTh(const double Enu,const double CosTh) const
 {
 	// Differential cross section
 	//  d Sigma
@@ -544,7 +543,7 @@ double ESCrossSec::dSigmadCosTh(const double Enu,const double CosTh) const
 //---------------- private routine ----------------------------
 
 // fL(): add by y.t. 14-JAN-2003
-double fL(const double x)
+double CCCrossSec::fL(const double x) const
 {
 	int istep = 1000;    // should not be hard corded??
 
@@ -564,7 +563,7 @@ double fL(const double x)
 //--------------------------------------
 
 
-void ESCrossSec::SetRadiativeCorrection(const int ii) {
+void CCCrossSec::SetRadiativeCorrection(const int ii) {
 	fRadiativeCorrection = ii;
 
 	// if any of the table options are set we need to load the table
@@ -574,7 +573,7 @@ void ESCrossSec::SetRadiativeCorrection(const int ii) {
 
 //--------------------------------------
 
-void ESCrossSec::LoadTablesDB()
+void CCCrossSec::LoadTablesDB()
 {
 	// Get two different links (total and differential)
 	// depending on the reaction
@@ -582,7 +581,7 @@ void ESCrossSec::LoadTablesDB()
 	std::string tblname = "pnue_tot_";
 	tblname += fReactionStr;
 
-	DBLinkPtr linkdb = DB::Get()->GetLink("ESXS",tblname.c_str());
+	DBLinkPtr linkdb = DB::Get()->GetLink("CCXS",tblname.c_str());
 	fNDataTot = 0;
 	fEnuStepTot = 0.0;
 
@@ -595,7 +594,7 @@ void ESCrossSec::LoadTablesDB()
 	// It increases first in Enu and then in T
 	tblname = "pnue_dif_";
 	tblname += fReactionStr;
-	linkdb = DB::Get()->GetLink("ESXS",tblname.c_str());
+	linkdb = DB::Get()->GetLink("CCXS",tblname.c_str());
 	fNDataDif = linkdb->GetI("NData");
 	fEnuStepDif = linkdb->GetD("EStep");
 
@@ -604,7 +603,7 @@ void ESCrossSec::LoadTablesDB()
 }
 
 //_________________________________________________________________________
-void ESCrossSec::SetReaction(const std::string &rstr)
+void CCCrossSec::SetReaction(const std::string &rstr)
 {
 
 	// Set the reaction type
@@ -626,7 +625,7 @@ void ESCrossSec::SetReaction(const std::string &rstr)
 		fReactionStr = rstr;
 		fReaction = nuebar;
 	} else {
-		warn << "ESCrossSec::SetReaction > Unknown reaction [ "
+		warn << "CCCrossSec::SetReaction > Unknown reaction [ "
 				<< rstr << " ]." << newline;
 		throw std::invalid_argument("Unknown reaction " + rstr);
 	}
@@ -641,16 +640,16 @@ void ESCrossSec::SetReaction(const std::string &rstr)
 }
 
 //________________________________________________________________________________
-void ESCrossSec::SetSinThetaW(const double &sintw) {
+void CCCrossSec::SetSinThetaW(const double &sintw) {
 	fsinthetaW2 = sintw;
 	// New calculation.
 	// Force recalculation of gL and GR
 	CalcG();
 }
 
-TGraph *ESCrossSec::DrawdSigmadT(const double Enu) const {
+TGraph *CCCrossSec::DrawdSigmadT(const double Enu) const {
 #ifdef RATDEBUG
-	debug << "[ESCrossSec]::DrawdSigmadT : Sampling Enu=" << Enu << " MeV." << newline;
+	debug << "[CCCrossSec]::DrawdSigmadT : Sampling Enu=" << Enu << " MeV." << newline;
 #endif
 
 	TGraph *g = new TGraph();
@@ -659,7 +658,7 @@ TGraph *ESCrossSec::DrawdSigmadT(const double Enu) const {
 	const double xwid = emax - emin;
 	const double xstep = xwid/(double)npoints;
 #ifdef RATDEBUG
-	debug << "[ESCrossSec]::DrawdSigmadT : Sampling data: emin=" << emin << " MeV."
+	debug << "[CCCrossSec]::DrawdSigmadT : Sampling data: emin=" << emin << " MeV."
 			<< " emax=" << emax << " MeV xwid=" << xwid << " MeV  xstep=" << xstep
 			<< newline;
 #endif
@@ -670,7 +669,7 @@ TGraph *ESCrossSec::DrawdSigmadT(const double Enu) const {
 		dsigma = dSigmadT(Enu,Te);
 		g->SetPoint(ip,Te,dsigma);
 	}
-	//g->Print();
+	g->Print();
 	return g;
 }
 } // -- namespace RAT

@@ -205,6 +205,7 @@ namespace RAT {
 	 * @return total cross section in units of \f$ 10^{-42} cm^{2} \f$ .
 	 */
     double SigmaLab(double Enu) const;
+    double fL(const double x) const;
 
 
 	NuEType fReaction;   	/// Reaction type

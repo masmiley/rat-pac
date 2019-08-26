@@ -14,6 +14,7 @@
 #include <G4ProcessManager.hh>
 #include <G4ProcessVector.hh>
 #include <G4OpBoundaryProcess.hh>
+#include <G4OpRayleigh.hh>
 #include <G4RunManager.hh>
 #include <RAT/GLG4OpAttenuation.hh>
 #include <RAT/GLG4Scint.hh>
@@ -23,12 +24,9 @@
 #include <RAT/PhysicsListMessenger.hh>
 #include <RAT/PhysicsList.hh>
 
-template<>
-G4VUPLData* G4VUPLSplitter<G4VUPLData>::offset = NULL;
-
 namespace RAT {
 
-PhysicsList::PhysicsList() : Shielding(), wlsModel(NULL) {
+PhysicsList::PhysicsList() : Shielding(), wlsModel(NULL), disableCerenkov(false) {
   new PhysicsListMessenger(this);
 }
 
@@ -138,6 +136,7 @@ void PhysicsList::ConstructOpticalProcesses() {
 
   // Optical boundary processes: default G4
   G4OpBoundaryProcess* opBoundaryProcess = new G4OpBoundaryProcess();
+  G4OpRayleigh* opRayleigh = new G4OpRayleigh();
 
   // Wavelength shifting: User-selectable via PhysicsListMessenger
   if (this->wlsModel) {
@@ -168,12 +167,16 @@ void PhysicsList::ConstructOpticalProcesses() {
     G4ProcessManager* pmanager = particle->GetProcessManager();
     G4String particleName = particle->GetParticleName();
     if (cerenkovProcess->IsApplicable(*particle)) {
-      pmanager->AddProcess(cerenkovProcess);
-      pmanager->SetProcessOrdering(cerenkovProcess, idxPostStep);
+      if (disableCerenkov){
+      }else{
+        pmanager->AddProcess(cerenkovProcess);
+        pmanager->SetProcessOrdering(cerenkovProcess, idxPostStep);
+      }
     }
     if (particleName == "opticalphoton") {
       pmanager->AddDiscreteProcess(attenuationProcess);
       pmanager->AddDiscreteProcess(opBoundaryProcess);
+      pmanager->AddDiscreteProcess(opRayleigh);
     }
   }
 }

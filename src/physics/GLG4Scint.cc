@@ -71,6 +71,11 @@ DummyProcess GLG4Scint::scintProcess("Scintillation", fUserDefined);
 DummyProcess GLG4Scint::reemissionProcess("Reemission", fUserDefined);
 G4std::vector<DummyProcess*> GLG4Scint::reemissionProcessVector;
 G4int GLG4Scint::fPhotonCount;
+G4int GLG4Scint::scintillatedPhotonCount = 0.0;
+G4int GLG4Scint::reemittedPhotonCount = 0.0;
+G4int GLG4Scint::reemittedPhotonCount0 = 0.0;
+G4int GLG4Scint::reemittedPhotonCount1 = 0.0;
+G4int GLG4Scint::reemittedPhotonCount2 = 0.0;
 
 /////////////////
 // Constructors
@@ -185,12 +190,22 @@ GLG4Scint::PostPostStepDoIt(const G4Track& aTrack, const G4Step& aStep) {
 
   // Below this anonymous namespace is label PostStepDoIt_DONE
   {
+
     // prepare to generate an event, organizing to
     // check for things that cause an early exit.
     aParticleChange.Initialize(aTrack);
     const G4Material* aMaterial = aTrack.GetMaterial();
     const MyPhysicsTable::Entry* physicsEntry =
       myPhysicsTable->GetEntry(aMaterial->GetIndex());
+
+      //G4MaterialPropertiesTable* temp = aMaterial->GetMaterialPropertiesTable();
+      /*
+      for (int i=0;i<10;i++){
+        double energy = 1e-6 + 0.5e-6*i;
+        std::cout << "  " << energy << " " <<  temp->GetProperty("ABSLENGTH")->Value(energy) << std::endl;
+      }
+      std::cout << std::endl;
+      */
       
     G4bool flagReemission = false;
     if (aTrack.GetDefinition() == G4OpticalPhoton::OpticalPhoton()) {
@@ -265,33 +280,54 @@ GLG4Scint::PostPostStepDoIt(const G4Track& aTrack, const G4Step& aStep) {
 
     // Finally ready to start generating the event
     // figure out how many photons we want to make
-    G4int numSecondaries;
+    G4int numSecondaries = 0;
     G4double weight;
-    //G4double reemissionProb = 0;
-    //G4int numComponents = -1;
-    //G4int absorberIndex = -1;
+    G4double reemissionProb = 0;
+    G4int numComponents = -1;
+    G4int absorberIndex = -1;
 
     if (flagReemission) {
       G4MaterialPropertiesTable* mpt_scint =
         aMaterial->GetMaterialPropertiesTable();
 
       // Check if there are multiple components
-      if (mpt_scint->ConstPropertyExists("COMPONENTS")) {
-        RAT::Log::Die("GLG4Scint: COMPONENTS not yet implemented");
-        //numComponents = (G4int) mpt_scint->GetConstProperty("NUM_COMP");
+      if (mpt_scint->ConstPropertyExists("NCOMPONENTS")) 
+        numComponents = (G4int) mpt_scint->GetConstProperty("NCOMPONENTS");
+
+      if (numComponents > 1){
+        // We know it absorbed, but we have to figure out which component it was
+        G4double rand = G4UniformRand();
+        G4double prob_norm = 1.0 / mpt_scint->GetProperty("ABSLENGTH")->Value(aTrack.GetKineticEnergy());
+        G4double prob = 0;
+        for (int ic=0;ic<numComponents;ic++){
+          char compAbsName[100];
+          sprintf(compAbsName,"ABSLENGTH%d",ic);
+          char compFracName[100];
+          sprintf(compFracName,"FRACTION%d",ic);
+          G4double fraction = mpt_scint->GetConstProperty(compFracName);
+          if (mpt_scint->GetProperty(compAbsName)){
+            prob += fraction * 1.0 / mpt_scint->GetProperty(compAbsName)->Value(aTrack.GetKineticEnergy());
+            if (rand < prob/prob_norm){
+              absorberIndex = ic;
+              char compReeName[100];
+              sprintf(compReeName,"REEMISSION_PROB%d",ic);
+              reemissionProb = mpt_scint->GetConstProperty(compReeName);
+              break;
+            }
+          }
+        }
+      }else{
+        G4MaterialPropertyVector* mpv_scint_reemission =
+          mpt_scint->GetProperty("REEMISSION_PROB");
+
+        if (mpv_scint_reemission == NULL) {
+          goto PostStepDoIt_DONE;
+        }
+        reemissionProb = mpv_scint_reemission->Value(aTrack.GetKineticEnergy());
       }
-
-      G4MaterialPropertyVector* mpv_scint_reemission =
-        mpt_scint->GetProperty("REEMISSION_PROB");
-
-      if (mpv_scint_reemission == NULL) {
-        goto PostStepDoIt_DONE;
-      }
-
-      G4double p_reemission =
-        mpv_scint_reemission->Value(aTrack.GetKineticEnergy());
-
-      numSecondaries = (G4int)(CLHEP::RandPoisson::shoot(p_reemission));
+      
+      if (G4UniformRand() < reemissionProb)
+        numSecondaries = (G4int) 1;
 
       if (numSecondaries == 0) {
         goto PostStepDoIt_DONE;
@@ -390,6 +426,11 @@ GLG4Scint::PostPostStepDoIt(const G4Track& aTrack, const G4Step& aStep) {
     // Now look up waveform information we need to add the secondaries
     G4PhysicsOrderedFreeVector* WaveformIntegral =
       physicsEntry->timeIntegral;
+    G4PhysicsOrderedFreeVector* ReWaveformIntegral;
+    if (absorberIndex >= 0)
+      ReWaveformIntegral = physicsEntry->componentReTimeIntegral[absorberIndex];
+    else
+      ReWaveformIntegral = physicsEntry->reTimeIntegral;
 
     for (G4int iSecondary=0; iSecondary<numSecondaries; iSecondary++) {
       // Determine photon momentum
@@ -505,7 +546,11 @@ GLG4Scint::PostPostStepDoIt(const G4Track& aTrack, const G4Step& aStep) {
       }
 
       // Delay for scintillation time
-      if (WaveformIntegral) {
+      if (flagReemission){
+        G4double WFvalue = G4UniformRand()*ReWaveformIntegral->GetMaxValue();
+        G4double sampledDelayTime = ReWaveformIntegral->GetEnergy(WFvalue);
+        deltaTime += sampledDelayTime;
+      } else if (WaveformIntegral) {
         G4double WFvalue = G4UniformRand()*WaveformIntegral->GetMaxValue();
         G4double sampledDelayTime = WaveformIntegral->GetEnergy(WFvalue);
         deltaTime += sampledDelayTime;
@@ -529,10 +574,28 @@ GLG4Scint::PostPostStepDoIt(const G4Track& aTrack, const G4Step& aStep) {
       if (flagReemission) {
         aSecondaryTrack->SetCreatorProcess(&reemissionProcess);
         trackInfo->SetCreatorProcess(reemissionProcess.GetProcessName());
+        if (numComponents){
+          G4std::vector<DummyProcess*>::iterator it;
+          it = reemissionProcessVector.begin();
+          advance(it,absorberIndex);
+          aSecondaryTrack->SetCreatorProcess( (*it ) );
+          trackInfo->SetCreatorProcess((*it)->GetProcessName());
+        }else{
+          aSecondaryTrack->SetCreatorProcess(&reemissionProcess);
+          trackInfo->SetCreatorProcess(reemissionProcess.GetProcessName());
+        }
+        reemittedPhotonCount++;
+        if (absorberIndex == 0)
+          reemittedPhotonCount0++;
+        if (absorberIndex == 1)
+          reemittedPhotonCount1++;
+        if (absorberIndex == 2)
+          reemittedPhotonCount2++;
       }
       else {
         aSecondaryTrack->SetCreatorProcess(&scintProcess);
         trackInfo->SetCreatorProcess(scintProcess.GetProcessName());
+        scintillatedPhotonCount++;
       }
 
       aSecondaryTrack->SetUserInformation(trackInfo);
@@ -711,8 +774,8 @@ void GLG4Scint::MyPhysicsTable::Build(const G4String& newname) {
 
 // Constructor for Entry
 GLG4Scint::MyPhysicsTable::Entry::Entry() {
-  spectrumIntegral = reemissionIntegral = timeIntegral = NULL;
-  I_own_spectrumIntegral = I_own_timeIntegral = false;
+  spectrumIntegral = reemissionIntegral = timeIntegral = reTimeIntegral = NULL;
+  I_own_spectrumIntegral = I_own_timeIntegral = I_own_reTimeIntegral = false;
   resolutionScale = 1.0;
   light_yield = 0.0;
   DMsConstant = birksConstant = ref_dE_dx = 0.0;
@@ -729,6 +792,9 @@ GLG4Scint::MyPhysicsTable::Entry::~Entry() {
 
   if (I_own_timeIntegral)
     delete timeIntegral;
+
+  if (I_own_reTimeIntegral)
+    delete reTimeIntegral;
 
   delete QuenchingArray;
 }
@@ -749,8 +815,11 @@ void GLG4Scint::MyPhysicsTable::Entry::Build(
     delete timeIntegral;
   }
 
+  if (I_own_reTimeIntegral)
+    delete reTimeIntegral;
+
   // Set defaults
-  spectrumIntegral = reemissionIntegral = timeIntegral = NULL;
+  spectrumIntegral = reemissionIntegral = timeIntegral = reTimeIntegral = NULL;
   resolutionScale = 1.0;
   birksConstant = ref_dE_dx = 0.0;    
   light_yield = 0.0;    
@@ -922,9 +991,168 @@ void GLG4Scint::MyPhysicsTable::Entry::Build(
     }
   }
 
+  // Retrieve vector of reemission time profile
+  // for the material from the material's optical
+  // properties table ("REEMITWAVEFORM")
+  
+  int numComponents = 0;
+  // Check if there are multiple components
+  if (aMaterialPropertiesTable->ConstPropertyExists("NCOMPONENTS")) 
+    numComponents = (int) aMaterialPropertiesTable->GetConstProperty("NCOMPONENTS");
+
+  if (numComponents){
+    for (int ic=0;ic<numComponents;ic++){
+      property_string.str("");
+      property_string << "REEMITWAVEFORM" << ic << _name;
+      G4MaterialPropertyVector* theReWaveForm = 
+        aMaterialPropertiesTable->GetProperty(property_string.str().c_str());
+
+      if (theReWaveForm) {
+        // Do we have time-series or decay-time data?
+        if (theReWaveForm->GetMinLowEdgeEnergy() >= 0.0) {
+          // We have digitized waveform (time-series) data
+          // Find the integral
+          componentReTimeIntegral.push_back(RAT::Integrate_MPV_to_POFV(theReWaveForm));
+        }
+        else {
+          // We have decay-time data.
+          // Sanity-check user's values:
+          // Issue a warning if they are nonsense, but continue
+          if (theReWaveForm->Energy(theReWaveForm->GetVectorLength() - 1) > 0.0) {
+            G4cerr << "GLG4Scint::MyPhysicsTable::Entry::Build():  "
+              << "REEMITTWAVEFORM" << _name
+              << " has both positive and negative X values.  "
+              << " Undefined results will ensue!\n";
+          }
+
+          G4double maxtime= -3.0 * (theReWaveForm->GetMinLowEdgeEnergy());
+          G4double mintime= -1.0 * (theReWaveForm->GetMaxLowEdgeEnergy());
+          G4double bin_width = mintime / 100;
+          int nbins = (int) (maxtime/bin_width) + 1;
+          G4double* tval = new G4double[nbins];
+          G4double* ival = new G4double[nbins];
+          {
+            for (int ii=0; ii<nbins; ii++) {
+              tval[ii] = ii * maxtime / nbins;
+              ival[ii] = 0.0;
+            }
+          }
+
+          for (unsigned int j=0; j < theReWaveForm->GetVectorLength(); j++) {
+            G4double ampl = (*theReWaveForm)[j];
+            G4double decy = theReWaveForm->Energy(j);
+            {
+              for (int ii=0; ii<nbins; ii++) {
+                ival[ii] += ampl * (1.0 - exp(tval[ii] / decy));
+              }
+            }
+          }
+
+          {
+            for (int ii=0; ii<nbins; ii++) {
+              ival[ii] /= ival[nbins-1];
+            }
+          }
+
+          componentReTimeIntegral.push_back(new G4PhysicsOrderedFreeVector(tval, ival, nbins));
+
+          // in Geant4.0.0, G4PhysicsOrderedFreeVector makes its own copy
+          // of any array passed to its constructor, so ...
+          delete[] tval;
+          delete[] ival;
+        }
+      }
+      else {
+        // Use default integral (possibly null)
+        componentReTimeIntegral.push_back(MyPhysicsTable::GetDefault()->GetEntry(i)->timeIntegral);
+
+      }
+    }
+
+  }else{
+    property_string.str("");
+    property_string << "REEMITWAVEFORM" << _name;
+    G4MaterialPropertyVector* theReWaveForm = 
+      aMaterialPropertiesTable->GetProperty(property_string.str().c_str());
+
+    if (theReWaveForm) {
+      // Do we have time-series or decay-time data?
+      if (theReWaveForm->GetMinLowEdgeEnergy() >= 0.0) {
+        // We have digitized waveform (time-series) data
+        // Find the integral
+        reTimeIntegral = RAT::Integrate_MPV_to_POFV(theReWaveForm);
+        I_own_reTimeIntegral = true;
+      }
+      else {
+        // We have decay-time data.
+        // Sanity-check user's values:
+        // Issue a warning if they are nonsense, but continue
+        if (theReWaveForm->Energy(theReWaveForm->GetVectorLength() - 1) > 0.0) {
+          G4cerr << "GLG4Scint::MyPhysicsTable::Entry::Build():  "
+            << "REEMITTWAVEFORM" << _name
+            << " has both positive and negative X values.  "
+            << " Undefined results will ensue!\n";
+        }
+
+        G4double maxtime= -3.0 * (theReWaveForm->GetMinLowEdgeEnergy());
+        G4double mintime= -1.0 * (theReWaveForm->GetMaxLowEdgeEnergy());
+        G4double bin_width = mintime / 100;
+        int nbins = (int) (maxtime/bin_width) + 1;
+        G4double* tval = new G4double[nbins];
+        G4double* ival = new G4double[nbins];
+        {
+          for (int ii=0; ii<nbins; ii++) {
+            tval[ii] = ii * maxtime / nbins;
+            ival[ii] = 0.0;
+          }
+        }
+
+        for (unsigned int j=0; j < theReWaveForm->GetVectorLength(); j++) {
+          G4double ampl = (*theReWaveForm)[j];
+          G4double decy = theReWaveForm->Energy(j);
+          {
+            for (int ii=0; ii<nbins; ii++) {
+              ival[ii] += ampl * (1.0 - exp(tval[ii] / decy));
+            }
+          }
+        }
+
+        {
+          for (int ii=0; ii<nbins; ii++) {
+            ival[ii] /= ival[nbins-1];
+          }
+        }
+
+        reTimeIntegral = new G4PhysicsOrderedFreeVector(tval, ival, nbins);
+        I_own_reTimeIntegral = true;
+
+        // in Geant4.0.0, G4PhysicsOrderedFreeVector makes its own copy
+        // of any array passed to its constructor, so ...
+        delete[] tval;
+        delete[] ival;
+      }
+    }
+    else {
+      // Use default integral (possibly null)
+      reTimeIntegral = MyPhysicsTable::GetDefault()->GetEntry(i)->timeIntegral;
+      I_own_reTimeIntegral = false;
+
+    }
+  }
+
   property_string.str("");
   property_string << "QF" << _name;
   QuenchingArray = aMaterialPropertiesTable->GetProperty(property_string.str().c_str());
+
+  // Create a dummy process describing reemission for each component
+  // up to the max number of components in any material in RAT
+  if((int) reemissionProcessVector.size() < numComponents)
+    for(int k=reemissionProcessVector.size(); k<numComponents; k++){
+      std::stringstream process_name;
+      process_name << "Reemission_from_comp" << k;
+      DummyProcess* ReemissionCompProcess = new DummyProcess((process_name.str()).c_str(), fUserDefined);
+      reemissionProcessVector.push_back(ReemissionCompProcess);
+    }
 }
 
 

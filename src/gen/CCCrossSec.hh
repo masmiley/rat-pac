@@ -1,43 +1,26 @@
 ////////////////////////////////////////////////////////////////////
 ///
-///         Code contributed by the SNO+ collaboration
+/// \class RAT::CCCrossSec
 ///
-/// \class RAT::ESCrossSec
+/// \brief Calculates neutrino-nucleus charged current interaction on Lithium-7.
+/// (based on ES generator).
 ///
-/// \brief Calculates neutrino-electron elastic scattering.
-/// (based on original QSNO code by F. Duncan, M. Chen and Y. Takeuchi).
-///
-/// \author Nuno Barros <nfbarros@hep.upenn.edu> -- contact person
+/// \author Max Smiley <masmiley@berkeley.edu> -- contact person
 ///
 /// REVISION HISTORY:\n
-/// 23-NOV-2010 - Nuno Barros 	- Imported and adapted into SNO+ RAT
-///             				- Shamelessly taken from SNO QPhysics class PNuE
-///
-/// 22-JUN-2012 - Nuno Barros	- Cleaned up code and solved a small problem with unit conversion.
-///
-/// 07-JUL-2012 - Nuno Barros 	- Removed all Geant4 streamers replacing them by RAT log objects.
-///								- Changed geant4 data types by C++ data types (suggestion by CIC).
-///								- Revised constness of members.
 ///
 ///
-/// \details Calculates the neutrino-electron ES cross section.
-///			The calculation is performed either for the ES_e (W+Z) channel, or the ES_mu,tau (Z) channel.
+/// \details Calculates the neutrino-nucleus CC cross section.
 /// 		Some remarks concerning the calculations.
 ///			\param E,Enu 	: Neutrino energy (MeV).
 ///			\param T,Te		: Recoil electron energy (MeV).
 ///			\return Cross section in units of $10^{-42}cm^{2}$
 ///
-///			Available strategies for the ES cross section calculation (set by messenger):
-///			- 1 : Original routine from QSNO::PNuE (Bahcall).
-///			- 2 : Improved routine from QSNO::PNuE (without rad. corrections).
-///			- 3 : Improved routine from QSNO::PNuE (with rad. corrections - analytical).
-///			- 4 (default) : Improved routine from QSNO::PNuE (with rad. corrections - table).
-///
 ///
 ////////////////////////////////////////////////////////////////////
 
-#ifndef __RAT_ESCrossSec__
-#define __RAT_ESCrossSec__
+#ifndef __RAT_CCCrossSec__
+#define __RAT_CCCrossSec__
 
 // G4 headers
 #include <globals.hh>
@@ -50,17 +33,17 @@
 namespace RAT {
 
   // Forward declarations within the namespace
-  class ESCrossSecMessenger;
+  class CCCrossSecMessenger;
 
 
-    class ESCrossSec {
+    class CCCrossSec {
 
     public:
 	enum NuEType {nue,nuebar,numu,numubar};
 
-	ESCrossSec(const char* flavor = "nue");
+	CCCrossSec(const char* flavor = "nue");
 
-	~ESCrossSec();
+	~CCCrossSec();
 
 	// Set's the defaults for the calculation
 	void Defaults();
@@ -104,7 +87,7 @@ namespace RAT {
 	double dSigmadCosTh(const double Enu,const double CosTh) const;
 
 	/**
-	 * @brief 3D equivalent of ESCrossSec::dSigmadCosTh
+	 * @brief 3D equivalent of CCCrossSec::dSigmadCosTh
 	 *
 	 * @param Enu Incoming neutrino energy.
 	 * @param theta Cosine (FIXME) of laboratory recoil angle of the electron.
@@ -198,13 +181,14 @@ namespace RAT {
     private:
 
 	/**
-	 * Rename of ESCrossSec::Sigma. To be discontinued.
+	 * Rename of CCCrossSec::Sigma. To be discontinued.
 	 *
-	 * @see ESCrossSec::Sigma
+	 * @see CCCrossSec::Sigma
 	 * @param Enu Incoming neutrino energy.
 	 * @return total cross section in units of \f$ 10^{-42} cm^{2} \f$ .
 	 */
     double SigmaLab(double Enu) const;
+    double fL(const double x) const;
 
 
 	NuEType fReaction;   	/// Reaction type
@@ -252,7 +236,7 @@ namespace RAT {
 	LinearInterp<double> fTableDif_e;
 	std::vector<double>  fTableDif;
 
-	ESCrossSecMessenger *fMessenger;
+	CCCrossSecMessenger *fMessenger;
 
     };
 
@@ -260,7 +244,7 @@ namespace RAT {
 // Some inline definitions to make the code a bit faster
 //
 
-    inline void ESCrossSec::CalcG()
+    inline void CCCrossSec::CalcG()
     {
 	// calculate the gL and gR for
 	// the reaction type

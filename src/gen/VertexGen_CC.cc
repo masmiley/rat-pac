@@ -1,12 +1,11 @@
-// Calculates the cross-section for neutrino-elastic scattering  
+// Calculates the cross-section for neutrino-nucleus charge current interaction 
 // as function of neutrino energy and the electron's recoil energy.
 // Allow for variations in the weak mixing angle and the possibility 
 // of a neutrino magnetic moment
 //
-// J. Formaggio (UW) -02/09/2005
 
-#include <RAT/VertexGen_ES.hh>
-#include <RAT/ESgen.hh>
+#include <RAT/VertexGen_CC.hh>
+#include <RAT/CCgen.hh>
 #include <RAT/PrimaryVertexInformation.hh>
 
 #include <RAT/GLG4PosGen.hh>
@@ -30,22 +29,22 @@
 
 namespace RAT {
 
-  VertexGen_ES::VertexGen_ES(const char *arg_dbname)
+  VertexGen_CC::VertexGen_CC(const char *arg_dbname)
     : GLG4VertexGen(arg_dbname), fNuDir(0.,0.,0.), fDBName("SOLAR"), fRandomDir(false)
   {
     fElectron = G4ParticleTable::GetParticleTable()->FindParticle("e-");  
     fNue = G4ParticleTable::GetParticleTable()->FindParticle("nu_e");
     fNumu = G4ParticleTable::GetParticleTable()->FindParticle("nu_mu");
     fElectronMass = fElectron->GetPDGMass();
-    fESgen = new ESgen();
+    fCCgen = new CCgen();
   }
 
-  VertexGen_ES::~VertexGen_ES() {
-    if (fESgen) delete fESgen;
+  VertexGen_CC::~VertexGen_CC() {
+    if (fCCgen) delete fCCgen;
   }
 
 
-  void VertexGen_ES::
+  void VertexGen_CC::
     GeneratePrimaryVertex(G4Event* argEvent,
 			G4ThreeVector& dx,
 			G4double dt)
@@ -67,18 +66,18 @@ namespace RAT {
       fNuDir.setRThetaPhi(1.0, theta, phi);
     }
 
-    // Generate elastic-scattering interaction using ESgen.
+    // Generate elastic-scattering interaction using CCgen.
     // NB: Updated to keep track of the neutrino as well as the electron
-    // For the moment the ESgen does not full mom_nu so it is empty
+    // For the moment the CCgen does not full mom_nu so it is empty
     //
 
     CLHEP::HepLorentzVector mom_electron, mom_nu;
-    fESgen->GenerateEvent( fNuDir, mom_nu, mom_electron );
+    fCCgen->GenerateEvent( fNuDir, mom_nu, mom_electron );
 
 
     // -- Create particle at vertex
     // FIXME: Should we keep track of the outgoing neutrino as well?
-    //       If so ESgen needs to be updated to pass the new neutrino direction.
+    //       If so CCgen needs to be updated to pass the new neutrino direction.
     
 
     G4PrimaryParticle* electron_particle =
@@ -117,14 +116,14 @@ namespace RAT {
   }
 
 
-  void VertexGen_ES::SetState(G4String newValues)
+  void VertexGen_CC::SetState(G4String newValues)
   {
     newValues = util_strip_default(newValues); // from GLG4StringUtil
     if (newValues.length() == 0) {
       // print help and current state
-      G4cout << "Current state of this VertexGen_ES:\n"
+      G4cout << "Current state of this VertexGen_CC:\n"
 	     << " \"" << GetState() << "\"\n" << G4endl;
-      G4cout << "Format of argument to VertexGen_ES::SetState: \n"
+      G4cout << "Format of argument to VertexGen_CC::SetState: \n"
         " \"nu_dir_x nu_dir_y nu_dir_z [db_name:][db_flux:nu_flavor]\"\n"
         " where fNuDir is the initial direction of the incoming neutrino.\n"
         " Does not have to be normalized.  Set to \"0. 0. 0.\" for isotropic\n"
@@ -138,7 +137,7 @@ namespace RAT {
     std::string rest;
     is >> x >> y >> z >> rest;
     if (is.fail()){
-      G4cout << "VertexGen_ES : Failed to extract state from input string.\n";
+      G4cout << "VertexGen_CC : Failed to extract state from input string.\n";
       return;
     }
 
@@ -169,13 +168,13 @@ namespace RAT {
       case 1:
         this->SetDBName(params[0]);
       default:
-        G4cout << "VertexGen_ES : Detected only " << params.size() << " neutrino state terms (1,2, or 3 expected).\n";
+        G4cout << "VertexGen_CC : Detected only " << params.size() << " neutrino state terms (1,2, or 3 expected).\n";
         return;
     }
   }
 
 
-  G4String VertexGen_ES::GetState()
+  G4String VertexGen_CC::GetState()
   {
     std::ostringstream os;
 
@@ -185,22 +184,22 @@ namespace RAT {
     return rv;
   }
 
-  void VertexGen_ES::SetFlux(const G4String flux) {
+  void VertexGen_CC::SetFlux(const G4String flux) {
     if (fFlux == flux) return;
     fFlux = flux;
-    fESgen->SetNuType(fFlux);
+    fCCgen->SetNuType(fFlux);
   }
 
-  void VertexGen_ES::SetNuFlavor(const G4String flavor) {
+  void VertexGen_CC::SetNuFlavor(const G4String flavor) {
     if (fNuFlavor == flavor) return;
     fNuFlavor = flavor;
-    fESgen->SetNuFlavor(fNuFlavor);
+    fCCgen->SetNuFlavor(fNuFlavor);
   }
 
-  void VertexGen_ES::SetDBName(const G4String name) {
+  void VertexGen_CC::SetDBName(const G4String name) {
     if (fDBName == name) return;
     fDBName = name;
-    fESgen->SetDBName(fDBName);
+    fCCgen->SetDBName(fDBName);
   }
 
 

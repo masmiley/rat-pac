@@ -1,4 +1,4 @@
-// Generates an neutrino-elastic scattering event, based on the
+// Generates a neutrino-nucleus charged current event, based on the
 // cross-section as function of neutrino energy and the electron's
 // recoil energy.  Allow for variations in the weak mixing angle and
 // the possibility of a neutrino magnetic moment
@@ -7,13 +7,13 @@
 
 // Converted to Geant4+GLG4Sim+RAT by Bill Seligman (07-Feb-2006).
 // I'm following the code structure of the IBD classes:
-// RATVertexGen_ES handles the G4-related tasks of constructing an
+// RATVertexGen_CC handles the G4-related tasks of constructing an
 // event, while this class deals with the physics of the
 // cross-section.  Some of the code (the flux in particular) is copied
 // from IBDgen.
 
-#include <RAT/ESgen.hh>
-#include <RAT/ESCrossSec.hh>
+#include <RAT/CCgen.hh>
+#include <RAT/CCCrossSec.hh>
 #include <RAT/DB.hh>
 
 #include <G4ParticleDefinition.hh>
@@ -34,7 +34,7 @@ namespace RAT {
   // This class is a helper to take care of the type of spectrum that is going to be used and
   // reads the RATDB entries accordingly.
 
-  ESgen::ESgen() : fNuType("pep"), fNuFlavor("nue"),fXS(NULL), fNuSpectrum(NULL), fFluxMax(0.),
+  CCgen::CCgen() : fNuType("pep"), fNuFlavor("nue"),fXS(NULL), fNuSpectrum(NULL), fFluxMax(0.),
   fGenLoaded(false),fSpectrumRndm(0),fDBName("SOLAR")
   {
     // Initialize pointers
@@ -46,7 +46,7 @@ namespace RAT {
     LoadGenerator();
   }
 
-  void ESgen::LoadGenerator() {
+  void CCgen::LoadGenerator() {
     // Check if the generator is already loaded.
     // If it is, do nothing
     if (fGenLoaded)
@@ -81,7 +81,7 @@ namespace RAT {
     if (fXS != 0) {
       delete fXS;
     }
-    fXS = new ESCrossSec(fNuFlavor);
+    fXS = new CCCrossSec(fNuFlavor);
 
     // To sample neutrino energy need to scale flux by total
     // cross section at that neutrino energy
@@ -109,7 +109,7 @@ namespace RAT {
   }
 
 
-  ESgen::~ESgen()
+  CCgen::~CCgen()
   {
     if ( fXS != 0 )
     {
@@ -130,7 +130,7 @@ namespace RAT {
   }
 
 
-  void ESgen::GenerateEvent(const G4ThreeVector& theNeutrino,
+  void CCgen::GenerateEvent(const G4ThreeVector& theNeutrino,
       G4LorentzVector& nu_incoming,
       G4LorentzVector& electron)
   {
@@ -139,7 +139,7 @@ namespace RAT {
     // For now just throw something that can be caught at an upper level.
     // Need to define a set of specific exceptions
     if (!fGenLoaded) {
-      G4Exception("[ESgen]::GenerateEvent","ArgError",FatalErrorInArgument,"Vertex generation called but it seems that it is not ready yet.");
+      G4Exception("[CCgen]::GenerateEvent","ArgError",FatalErrorInArgument,"Vertex generation called but it seems that it is not ready yet.");
     }
 
     ///!
@@ -197,7 +197,7 @@ namespace RAT {
     // For the moment we only pass the incoming neutrino information back.
   }
 
-  void ESgen::Reset()
+  void CCgen::Reset()
   {
     // Reset the falg dependent objects.
     // After this method a call to LoadGenerator should always follow
@@ -213,7 +213,7 @@ namespace RAT {
     LoadGenerator();
   }
 
-  void ESgen::Show()
+  void CCgen::Show()
   {
     G4cout << "Elastic Scattering Settings:\n";
     G4cout << "NuType : " << fNuType.c_str() << "\n";
@@ -223,7 +223,7 @@ namespace RAT {
   //
   // If we change the neutrino type we should reload the generator
   // to force it to reload the spectra from the database
-  void ESgen::SetNuType(const G4String &nutype) {
+  void CCgen::SetNuType(const G4String &nutype) {
 
     if (fGenType != nutype ) {
       fNuType = nutype;
@@ -235,7 +235,7 @@ namespace RAT {
   //
   // If we change the neutrino flavor we should reload the generator
   // to force it to reload the spectra from the database
-  void ESgen::SetNuFlavor(const G4String &nuflavor) {
+  void CCgen::SetNuFlavor(const G4String &nuflavor) {
 
     if (fNuFlavor != nuflavor ) {
       fNuFlavor = nuflavor;
@@ -244,7 +244,7 @@ namespace RAT {
     }
   }
 
-  void ESgen::SetDBName(const G4String name) {
+  void CCgen::SetDBName(const G4String name) {
     if (fDBName != name) {
       fDBName = name;
       fGenLoaded = false;
@@ -255,7 +255,7 @@ namespace RAT {
   // This function samples the energy spectrum of the chosen neutrino and
   // decides from it the proper energy.
   // Keep in mind that pep is always the same, but be7 is a *very* special case
-  G4double ESgen::SampleRecoilEnergy(G4double Enu) {
+  G4double CCgen::SampleRecoilEnergy(G4double Enu) {
 
     G4double Te = 0.0;
 
@@ -275,7 +275,7 @@ namespace RAT {
   // This function samples the energy spectrum of the chosen neutrino and
   // decides from it the proper energy.
   // Keep in mind that pep is always the same, but be7 is a *very* special case
-  G4double ESgen::SampleNuEnergy() {
+  G4double CCgen::SampleNuEnergy() {
     G4double Enu = 0.0;
     G4double tmp = 0.0;
 

@@ -136,7 +136,9 @@ public:
         G4PhysicsOrderedFreeVector* spectrumIntegral;
         G4PhysicsOrderedFreeVector* reemissionIntegral;
         G4PhysicsOrderedFreeVector* timeIntegral;
-        bool I_own_spectrumIntegral, I_own_timeIntegral;
+        G4PhysicsOrderedFreeVector* reTimeIntegral;
+        G4std::vector<G4PhysicsOrderedFreeVector*> componentReTimeIntegral;
+        bool I_own_spectrumIntegral, I_own_timeIntegral, I_own_reTimeIntegral;
         bool HaveTimeConsts;
         G4double resolutionScale;
         G4double birksConstant;
@@ -199,6 +201,12 @@ public:
   static G4VParticleChange* GenericPostPostStepDoIt(const G4Step *pStep);
 
   // For energy deposition diagnosis
+  static void ResetPhotonCount() { scintillatedPhotonCount = reemittedPhotonCount = reemittedPhotonCount0 = reemittedPhotonCount1 = reemittedPhotonCount2 = 0.0; }
+  static G4int GetScintillatedPhotonCount() { return scintillatedPhotonCount; }
+  static G4int GetReemittedPhotonCount() { return reemittedPhotonCount; }
+  static G4int GetReemittedPhotonCount0() { return reemittedPhotonCount0; }
+  static G4int GetReemittedPhotonCount1() { return reemittedPhotonCount1; }
+  static G4int GetReemittedPhotonCount2() { return reemittedPhotonCount2; }
   static void ResetTotEdep() {
     totEdep = totEdep_quenched = totEdep_time = 0.0;
     scintCentroidSum *= 0.0;
@@ -255,6 +263,11 @@ protected:
   static G4double totEdep_quenched;
   static G4double totEdep_time;
   static G4ThreeVector scintCentroidSum;
+  static G4int scintillatedPhotonCount;
+  static G4int reemittedPhotonCount;
+  static G4int reemittedPhotonCount0;
+  static G4int reemittedPhotonCount1;
+  static G4int reemittedPhotonCount2;
 
   // Bogus processes used to tag photons created in GLG4Scint
   static DummyProcess scintProcess;

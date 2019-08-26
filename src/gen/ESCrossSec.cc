@@ -417,7 +417,6 @@ double ESCrossSec::dSigmadT(const double Enu,const double Te) const
 				double fpm = 0.0;
 
 				if (fRadiativeCorrection != 2) {
-					double  fL(double x);
 					fm = (E/el * log((E+el)/fMe)-1.0) *
 							(2.0*log(1.0-z-fMe/(E+el))
 					- log(1.0-z) - 0.5*log(z) - 5.0/12.0) + 0.5 *
@@ -544,7 +543,7 @@ double ESCrossSec::dSigmadCosTh(const double Enu,const double CosTh) const
 //---------------- private routine ----------------------------
 
 // fL(): add by y.t. 14-JAN-2003
-double fL(const double x)
+double ESCrossSec::fL(const double x) const
 {
 	int istep = 1000;    // should not be hard corded??
 

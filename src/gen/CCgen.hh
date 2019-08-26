@@ -1,52 +1,18 @@
-#ifndef __RAT_ESgen__
-#define __RAT_ESgen__
+#ifndef __RAT_CCgen__
+#define __RAT_CCgen__
 
 ////////////////////////////////////////////////////////////////////
 ///
-///         Code contributed by the SNO+ collaboration
+/// \class RAT::CCgen
+/// \author Max Smiley <masmiley@berkeley.edu> -- contact person
+/// \date 26-Aug-2019
 ///
-/// \class RAT::ESgen
-/// \author Nuno Barros <nfbarros@hep.upenn.edu> -- contact person
-/// \date 15-Dec-2010
-///
-/// \brief Implements the generation of a neutrino-electron elastic scattering event.
+/// \brief Implements the generation of a neutrino-nucleus charged current interaction.
 ///
 /// This class is the workhorse of the generator, separating the Geant4 specific methods from a more physics oriented structure.
-/// It is based on the original implementation by Joe Formaggio and the following adaptation by Bill Seligman.
-/// However the whole class was re-written later to adapt it for the final use of solar neutrino generation.
+/// It is based on the original elastic scattering implementation by Joe Formaggio and the following adaptation by Bill Seligman.
+/// However the whole class was re-written later to adapt it for the final use of charged current interactions.
 ///
-/// REVISION HISTORY:\n
-///     - 02-Sep-2005 J. Formaggio (UW):
-///         - Original implementation.
-///         - Generates an neutrino-elastic scattering event, based on the cross-section as function of neutrino energy and the electron's recoil energy.  Allow for variations in the weak mixing angle and the possibility of a neutrino magnetic moment.
-///     - 07-Feb-2006 Bill Seligman:
-///         - Converted to Geant4+GLG4Sim+RAT.
-///         - I'm following the code structure of the IBD classes: RATVertexGen_ES handles the G4-related tasks of constructing an event, while this class deals with the physics of the cross-section.  Some of the code (the flux in particular) is copied from IBDgen.
-///     - 15-Dec-2010 N. Barros (LIP)
-///         - Strongly re-wrote this class to accommodate a solar neutrino generator. (solar). The original implementation was generating ES events from reactor anti-nus (ibd).
-///         - The code has been strongly refactored so that the original code is still running. The choice is passed through the macro file or the command line.
-///     - 18-Feb-2011 N. Barros:
-///         - Improved the code for speed.
-///         - Solved a minor bug in the calculation of the direction of the outgoing electron.
-///         - Moved Geant4-related calculations into the parent vertex generator RAT::VertexGen_ES.
-///     - 14-Dec-2011 N. Barros:
-///         - Improved usage of the incoming neutrino direction and corresponding calculation of outgoing electron.
-///     - 10-Jan-2012 N. Barros:
-///         - Solved a problem with the rotation applied to get the outgoing electron direction.
-///         - Improved speed in the determination of the electron momentum.
-///     - 22-Jun-2012   N. Barros:
-///         - Refactored code and cleaned up to prepare for pull request.
-///         - Improved speed on random sampling over the spectrum and cross sections.
-///     - 02-Jul-2012 N. Barros:
-///         - Removed now superfluous SetXSecMax(). Now using CLHEP random sampler.
-///         - Solved problem in the determination of the rater per target for continuous spectra.
-///         - Removed dependency on ESMessenger. Its functionality was moved to upper level classes.
-///     - 14-Aug-2012 N. Barros:
-///         - Solved some issues with the compatibility with the combo generator.
-///         - If the direction is set to 0,0,0 the generator now produces a random direction at each event.
-///         - Added a new flag to customize the name of the database to draw the spectrum from (allows ad-hoc entries).
-///     - 17-Jul-2017 R. Bonventre:
-///         - Modified for RAT-PAC
 ////////////////////////////////////////////////////////////////////
 
 #include <RAT/LinearInterp.hh>
@@ -62,12 +28,12 @@ class RandGeneral;
 namespace RAT {
 
   /// Forward declarations within the namespace
-  class ESCrossSec;
+  class CCCrossSec;
 
-  class ESgen {
+  class CCgen {
   public:
-    ESgen();
-    ~ESgen();
+    CCgen();
+    ~CCgen();
   
     // Generate random event vectors
     //    Pass in the neutrino direction (unit vector)
@@ -163,7 +129,7 @@ namespace RAT {
 		G4String fNuFlavor;
 
 		/** Instance of cross-section class */
-		ESCrossSec *fXS;
+		CCCrossSec *fXS;
 
 		/**
 		 *  @brief Spectrum shape to be sampled

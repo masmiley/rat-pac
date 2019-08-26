@@ -35,6 +35,9 @@ public:
   // Get the WLS model name
   std::string GetOpWLSModelName() { return this->wlsModelName; }
 
+  void SetDisableCerenkov(bool newValue){disableCerenkov = newValue;}
+  bool GetDisableCerenkov(){return disableCerenkov;}
+
 private:
   // Construct and register optical processes
   void ConstructOpticalProcesses();
@@ -51,6 +54,7 @@ private:
 
   std::string wlsModelName;  // The name of the WLS model
   G4VPhysicsConstructor* wlsModel;  // The WLS model constructor
+  bool disableCerenkov;
 };
 
 }  // namespace RAT
