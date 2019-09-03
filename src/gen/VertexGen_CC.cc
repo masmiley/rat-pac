@@ -14,6 +14,7 @@
 
 #include <G4ParticleDefinition.hh>
 #include <G4ParticleTable.hh>
+#include <G4IonTable.hh>
 #include <G4ThreeVector.hh>
 #include <G4PrimaryVertex.hh>
 #include <G4PrimaryParticle.hh>
@@ -66,13 +67,14 @@ namespace RAT {
       fNuDir.setRThetaPhi(1.0, theta, phi);
     }
 
-    // Generate elastic-scattering interaction using CCgen.
+    // Generate charged current interaction using CCgen.
     // NB: Updated to keep track of the neutrino as well as the electron
     // For the moment the CCgen does not full mom_nu so it is empty
     //
 
     CLHEP::HepLorentzVector mom_electron, mom_nu;
-    fCCgen->GenerateEvent( fNuDir, mom_nu, mom_electron );
+    double e_nucleus;
+    fCCgen->GenerateEvent( fNuDir, mom_nu, mom_electron, e_nucleus);
 
 
     // -- Create particle at vertex
@@ -87,6 +89,11 @@ namespace RAT {
 			    mom_electron.pz());    // z component of momentum
     electron_particle->SetMass(fElectronMass); // This seems to help in VertexGen_IBD
     vertex->SetPrimary( electron_particle );  
+
+    // Add the Be7 nucleus leftover (at rest)
+    G4ParticleDefinition* be7_ion = G4IonTable::GetIonTable()->FindIon(4,7,e_nucleus);
+    G4PrimaryParticle* be7_part = new G4PrimaryParticle(be7_ion, 0, 0, 0); //FIXME Do I need to add the energy here also? -> Write a quick excitation generator
+    vertex->SetPrimary(be7_part);
 
     // Add the incoming neutrino as the primary
     G4PrimaryParticle *neutrinoparent;

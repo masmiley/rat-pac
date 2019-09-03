@@ -82,12 +82,13 @@ namespace RAT {
       delete fXS;
     }
     fXS = new CCCrossSec(fNuFlavor);
-
+    std::cout << "Test at 3.0MeV: " << fXS->Sigma(3.0) << std::endl;
     // To sample neutrino energy need to scale flux by total
     // cross section at that neutrino energy
     std::vector<double> csScaledFluxTbl(fFluxTbl.size(),0);
     for (size_t i=0;i<csScaledFluxTbl.size();i++){
       csScaledFluxTbl[i] = fFluxTbl[i] * fXS->Sigma(fEnuTbl[i]);
+      std::cout << "Enu: " << fEnuTbl[i] << " XS:" << fXS->Sigma(fEnuTbl[i]) << std::endl;
     }
 
 
@@ -132,7 +133,7 @@ namespace RAT {
 
   void CCgen::GenerateEvent(const G4ThreeVector& theNeutrino,
       G4LorentzVector& nu_incoming,
-      G4LorentzVector& electron)
+      G4LorentzVector& electron, double& e_nucleus)
   {
 
     // Check if the generator has been loaded successfully
@@ -156,7 +157,8 @@ namespace RAT {
     // shape and sample from it.
     Enu = SampleNuEnergy()*MeV;
     Te = SampleRecoilEnergy(Enu)*MeV;
-
+    //Doesn't support exictation currently
+    e_nucleus = 0;
 
     // from the incoming neutrino we have already the initial direction.
     // The final electron direction will follow that.

@@ -49,7 +49,7 @@ namespace RAT {
 		 */
     void GenerateEvent(const G4ThreeVector& nu_dir,
 				G4LorentzVector &neutrino,
-				G4LorentzVector &electron);
+				G4LorentzVector &electron, double &e_nucleus);
 
 		/**
 		 * Setter for the flux to use.

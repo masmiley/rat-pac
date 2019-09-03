@@ -29,6 +29,7 @@
 #include <RAT/GLG4StringUtil.hh>
 // ROOT headers
 #include <TGraph.h>
+#include <vector>
 
 namespace RAT {
 
@@ -57,107 +58,12 @@ namespace RAT {
 	 */
 	double Sigma(const double Enu) const;
 
-
-	/**
-	 * @brief Calculate the differential cross section for the neutrino energy Enu.
-	 *
-	 * @param Enu Incoming neutrino energy (MeV).
-	 * @param Te  Recoil electron energy (MeV).
-	 * @return Differencial cross section \f$ \frac{d\sigma}{dT} \f$ in units of \f$ 10^{-42} cm^{2} \f$ .
-	 */
-	double dSigmadT(const double Enu,const double Te) const;
-
-	/**
-	 * Integrate the differential cross section between recoil energies T1 and T2.
-	 *
-	 * @param Enu Incoming neutrino energy (MeV).
-	 * @param T1  Lower limit of recoil energy interval (MeV).
-	 * @param T2  Upper limit of recoil energy interval (MeV).
-	 * @return \f$ \left.\frac{d\sigma}{dT}\right|_{\left[T1;T2\right]} \f$ in units of \f$ 10^{-42} cm^{2} \f$ .
-	 */
-	double IntegraldSigmadT(const double Enu,const double T1,const double T2) const ;
-
-	/**
-	 * @brief Calculate the differential cross section as a function of the recoil angle.
-	 *
-	 * @param Enu Incoming neutrino energy.
-	 * @param CosTh Cosine of laboratory recoil angle of the electron.
-	 * @return  \f$ \frac{d\sigma}{d\cos \theta} \f$ in units of \f$ 10^{-42} cm^{2} \f$ .
-	 */
-	double dSigmadCosTh(const double Enu,const double CosTh) const;
-
-	/**
-	 * @brief 3D equivalent of CCCrossSec::dSigmadCosTh
-	 *
-	 * @param Enu Incoming neutrino energy.
-	 * @param theta Cosine (FIXME) of laboratory recoil angle of the electron.
-	 * @param phi 	Azimuthal recoil angle.
-	 * @return  \f$ \frac{d\sigma}{d\Omega} \f$ in units of \f$ 10^{-42} cm^{2} \f$ .
-	 *
-	 * @note Usually not used. Needs further verification.
-	 *
-	 */
-	double dSigmadOmega(const double Enu,const double theta, const double phi) const;
-
-
-	//-----------------------------------------------------------------------
-	/**
-	 * @brief Setter for which calculation to use.
-	 *
-	 * The available calculations are:
-	 * 	-# 1 : No radiative corrections (Bahcall first calculation).
-	 * 	-# 2 : No radiative corrections from table.
-	 * 	-# 3 : Full analytical calculation with radiative corrections.
-	 * 	-# 4 : Full calculations with radiative corrections from table (default).
-	 *
-	 * @param ii Option for calculation to use.
-	 *
-	 */
-	void SetRadiativeCorrection(const int ii);
-
-	/**
-	 * @brief Getter of the cross section calculation type being used.
-	 *
-	 * @return index of calculation type.
-	 */
-	inline int GetRadiativeCorrection( ) const {return fRadiativeCorrection;};
-
-	/**
-	 * @brief Setter for the Weak mixing angle.
-	 *
-	 * @param sintw Weak mixing angle : \f$ \sin \theta_{W} \f$
-	 *
-	 */
-	void SetSinThetaW(const double &sintw ) ; //{fsinthetaW2 = sintw;};
-
-	/**
-	 * @brief Getter for the Weak mixing angle.
-	 *
-	 * @return Weak mixing angle : \f$ \sin \theta_{W} \f$
-	 *
-	 */
-	double GetSinThetaW() const {return fsinthetaW2;};
-
-	/**
-	 * @brief Setter for the neutrino type to be used.
-	 *
-	 * @param reaction neutrino type (nue,numu,nuebar,numubar)
-	 */
-	void SetReaction(const std::string &reaction);
-
-	/**
-	 * @brief Getter for the neutrino type to be used.
-	 *
-	 * @return reaction neutrino type (nue,numu,nuebar,numubar)
-	 */
-    const std::string& GetReaction() const {return fReactionStr;};
-
-	/**
-	 * @brief Return a TGraph with the differential cross section for an incoming neutrino with energy Enu.
+    /**
+	 * @brief Return a vector with the scaled differential cross section normalizations for each level for an incoming neutrino with energy Enu.
 	 * @param Enu Incoming neutrino energy (MeV)
-	 * @return TGraph with the shape of \f$ \frac{d\sigma}{dT} \f$ in units of \f$ 10^{-42} cm^{2} \f$ .
+	 * @return Vector with the (relative) level normalizations for \f$ \frac{d\sigma}{dT} \f$ in arbitrary units \f$ .
 	 */
-	TGraph *DrawdSigmadT(const double Enu) const;
+    std::vector<double> CalcdSigmadTNorms(const double Enu) const;
 
 	/**
 	 * Returns the global normalization of the cross section calculation.
@@ -168,28 +74,7 @@ namespace RAT {
 	 */
 	double CrossSecNorm() const {return 1e-42;};
 
-    protected:
-
-	/**
-	 * @brief Internal function to load the data from the DB.
-	 */
-	void LoadTablesDB();
-
-	void CalcG();
-
-
     private:
-
-	/**
-	 * Rename of CCCrossSec::Sigma. To be discontinued.
-	 *
-	 * @see CCCrossSec::Sigma
-	 * @param Enu Incoming neutrino energy.
-	 * @return total cross section in units of \f$ 10^{-42} cm^{2} \f$ .
-	 */
-    double SigmaLab(double Enu) const;
-    double fL(const double x) const;
-
 
 	NuEType fReaction;   	/// Reaction type
 	std::string fReactionStr;	/// String characterizing the reaction type
@@ -212,66 +97,13 @@ namespace RAT {
 	double  fMe;			/// electron mass
 	double  sigmaoverme; 	/// \f$ \frac{\sigma}{m_{e^{-}}}\f$
 
-	double  fgL;
-	double  fgR;
-
-	//-----------------------------------------------------------------------
-	// add by y.t. 16-JAN-2003
-	int     fRadiativeCorrection;  // flag to use radiative correction or not
-	//double  fL(double x);        // internal routine
-
-
-	/// Vars to manipulate the tables. Since the tables are the same for all instances, these can be static
-	static const double  fTableTeMin;
-	static const double  fTableTeMax;
-
-	// Total cross section table
-	int    fNDataTot;
-	float  fEnuStepTot;
-	LinearInterp<double> fTableTot_e;
-
-	// Differential cross section table
-	int                  fNDataDif;
-	float                fEnuStepDif;
-	LinearInterp<double> fTableDif_e;
-	std::vector<double>  fTableDif;
+    std::vector<double> fLevels;
+    std::vector<double> fNorms;
 
 	CCCrossSecMessenger *fMessenger;
 
     };
 
-//
-// Some inline definitions to make the code a bit faster
-//
-
-    inline void CCCrossSec::CalcG()
-    {
-	// calculate the gL and gR for
-	// the reaction type
-
-	if ( fReaction == nue)           {
-
-	    fgL =  0.5 + fsinthetaW2;
-	    fgR =  fsinthetaW2;
-
-	} else if (fReaction == nuebar)  {
-
-	    fgL =   fsinthetaW2;
-	    fgR =   0.5 + fsinthetaW2;
-
-	} else if (fReaction == numu)    {
-
-	    fgL =   -0.5 + fsinthetaW2;
-	    fgR =    fsinthetaW2;
-
-	} else if (fReaction == numubar) {
-
-	    fgL =   fsinthetaW2;
-	    fgR =   -0.5 + fsinthetaW2;
-
-	}
-	else throw std::invalid_argument("Unknown reaction " + fReactionStr);
-    }
 }
 
 

@@ -19,7 +19,6 @@ namespace RAT {
     fWmaCmd = new G4UIcmdWithADouble("/generator/cc/xsection/wma", this);
     fWmaCmd->SetGuidance("Sets the value of sine-squared theta (the weak mixing angle)");
     fWmaCmd->SetParameterName("sin2th",false);
-    fWmaCmd->SetDefaultValue( fCCXS->GetSinThetaW() );
 
 
     fStratCmd = new G4UIcmdWithAnInteger("/generator/cc/xsection/strategy", this);
@@ -31,7 +30,6 @@ namespace RAT {
     fStratCmd->SetGuidance("  3 : Improved routine from QSNO::PNuE (with rad. corrections - analytical).");
     fStratCmd->SetGuidance("  4 (default) : Improved routine from QSNO::PNuE (with rad. corrections - table).");
     fStratCmd->SetParameter(new G4UIparameter("strat",'i',false));
-    fStratCmd->SetDefaultValue( fCCXS->GetRadiativeCorrection() );
 
 
     //
@@ -45,12 +43,12 @@ namespace RAT {
     if ( command == fWmaCmd )
       {
         G4double wma = fWmaCmd->GetNewDoubleValue( newValue );
-        fCCXS->SetSinThetaW( wma );
+        std::cout << "Warning not using WMA: " << wma << std::endl;
       }
     else if ( command == fStratCmd )
       {
         G4int strat = fStratCmd->GetNewIntValue( newValue );
-        fCCXS->SetRadiativeCorrection( strat );
+        std::cout << "Warning not using strategy: " << strat << std::endl;
       }
     else
       {
@@ -60,10 +58,11 @@ namespace RAT {
 
   G4String CCCrossSecMessenger::GetCurrentValue(G4UIcommand* command)
   {
+    //Dummy values for now
     if ( command == fWmaCmd )
-      return fWmaCmd->ConvertToString( fCCXS->GetSinThetaW() );
+      return fWmaCmd->ConvertToString(0);
     else if ( command == fStratCmd )
-      return fStratCmd->ConvertToString( fCCXS->GetRadiativeCorrection() );
+      return fStratCmd->ConvertToString(0);
 
     // Error if we reach here.
     return G4String("Error: Invalid CCCrossSecMessenger \"get\" command");
