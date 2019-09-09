@@ -20,6 +20,7 @@
 #include <G4LorentzVector.hh>
 #include <CLHEP/Vector/LorentzVector.h>
 #include <CLHEP/Random/RandGeneral.h>
+#include <TF1.h>
 
 /// Forward declarations.
 class TGraph;
@@ -112,7 +113,10 @@ namespace RAT {
 		G4double SampleNuEnergy();
 
 		/** Sampler of recoil electron energy from the differential cross section. */
-		G4double SampleRecoilEnergy(G4double Enu);
+		G4double SampleRecoilEnergy(G4double Enu, int &Transition, double &Enucleus);
+
+		/** Sampler of recoil electron angle from the differential cross section. */
+		G4double SampleRecoilAngle(G4double Enu, G4double Te, int Transition);
 
 	protected:
 
@@ -137,6 +141,10 @@ namespace RAT {
 		 *  Using ROOT TGraph to make use of it's nice evaluator.
 		 */
 		TGraph *fNuSpectrum;
+
+                TF1* fFermiAngle;
+
+                TF1* fGTAngle;
 
 		/** vector of neutrino energy points in the neutrino spectrum shape. */
 		std::vector<double> fEnuTbl;

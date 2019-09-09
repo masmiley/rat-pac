@@ -58,12 +58,33 @@ namespace RAT {
 	 */
 	double Sigma(const double Enu) const;
 
-    /**
+        /**
+	 * @brief Return a vector with the allowed electron KE for each level for an incoming neutrino with energy Enu.
+	 * @param Enu Incoming neutrino energy (MeV)
+	 * @return Vector with the allowed electron KE in MeV .
+	 */
+        std::vector<double> CalcAllowedElectronKE(const double Enu) const;
+
+        /**
+	 * @brief Return a vector with the nuclear excitation for each level for an incoming neutrino with energy Enu.
+	 * @param Enu Incoming neutrino energy (MeV)
+	 * @return Vector with the allowed nuclear excitation in MeV .
+	 */
+        std::vector<double> CalcAllowedNuclearEx(const double Enu) const;
+
+        /**
+	 * @brief Return a vector with the allowed transition types for each level for an incoming neutrino with energy Enu.
+	 * @param Enu Incoming neutrino energy (MeV)
+	 * @return Vector with the allowed electron transition types .
+	 */
+        std::vector<double> GetAllowedTransitionTypes(const double Enu) const;
+
+        /**
 	 * @brief Return a vector with the scaled differential cross section normalizations for each level for an incoming neutrino with energy Enu.
 	 * @param Enu Incoming neutrino energy (MeV)
-	 * @return Vector with the (relative) level normalizations for \f$ \frac{d\sigma}{dT} \f$ in arbitrary units \f$ .
+	 * @return Vector with the (relative) level normalizations for \f$ \frac{d\sigma}{dT} \f$ in arbitrary units.
 	 */
-    std::vector<double> CalcdSigmadTNorms(const double Enu) const;
+        std::vector<double> CalcdSigmadTNorms(const double Enu) const;
 
 	/**
 	 * Returns the global normalization of the cross section calculation.
@@ -79,8 +100,6 @@ namespace RAT {
 	NuEType fReaction;   	/// Reaction type
 	std::string fReactionStr;	/// String characterizing the reaction type
 
-	double fEmin,fEmax;	/// Auxiliary variables to deal with the energies
-
 	// Some constants
 	static const double  fGf; 		/// Fermi constant (GeV^-2)
 	static const double  fhbarc; 	/// hbar*c (MeV*fm)
@@ -95,10 +114,10 @@ namespace RAT {
 	static double  fsinthetaW2;
 
 	double  fMe;			/// electron mass
-	double  sigmaoverme; 	/// \f$ \frac{\sigma}{m_{e^{-}}}\f$
 
-    std::vector<double> fLevels;
-    std::vector<double> fNorms;
+        std::vector<double> fLevels; //Energy of level transitions (mass change + excitation energy)
+        std::vector<double> fLevelTypes; //Type of transition (F = 0, GT = 1)
+        std::vector<double> fNorms; //E_e indepedent normalization factors for each transition
 
 	CCCrossSecMessenger *fMessenger;
 

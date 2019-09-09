@@ -24,6 +24,7 @@
 #include <TGraph.h>
 #include <CLHEP/Units/SystemOfUnits.h>
 #include <TMath.h>
+#include <TF1.h>
 
 #include <cmath>
 
@@ -77,31 +78,48 @@ namespace RAT {
     
     fNuSpectrum = new TGraph(fEnuTbl.size(),&fEnuTbl[0],&fFluxTbl[0]);
 
+    fFermiAngle = new TF1("fFermiAngle", "1+cos(x)",0, TMath::Pi());
+    fGTAngle = new TF1("fGTAngle", "1-1.0/3*cos(x)",0, TMath::Pi());
+
     // initialize the cross-section
     if (fXS != 0) {
       delete fXS;
     }
     fXS = new CCCrossSec(fNuFlavor);
-    std::cout << "Test at 3.0MeV: " << fXS->Sigma(3.0) << std::endl;
+
+    int last_zero = -1;
     // To sample neutrino energy need to scale flux by total
     // cross section at that neutrino energy
     std::vector<double> csScaledFluxTbl(fFluxTbl.size(),0);
     for (size_t i=0;i<csScaledFluxTbl.size();i++){
-      csScaledFluxTbl[i] = fFluxTbl[i] * fXS->Sigma(fEnuTbl[i]);
-      std::cout << "Enu: " << fEnuTbl[i] << " XS:" << fXS->Sigma(fEnuTbl[i]) << std::endl;
+      double ccxs = fXS->Sigma(fEnuTbl[i]);
+      csScaledFluxTbl[i] = fFluxTbl[i] * ccxs;
+      std::cout << fEnuTbl[i] << " " << fFluxTbl[i] << " " << ccxs << " " << csScaledFluxTbl[i] << std::endl;
+      if (ccxs == 0) {
+        last_zero = i;
+      }
     }
 
+    //Cast is a little dangerous but should be ok
+    if (last_zero >= 0 && last_zero < ((int) fFluxTbl.size()) - 1) {
+      fEnuMin = fEnuTbl[last_zero+1];
+      std::vector<double> temp;
+      for (unsigned int i = last_zero + 1; i < fFluxTbl.size(); i++) {
+        temp.push_back(csScaledFluxTbl[i]);
+      }
+      csScaledFluxTbl = temp;
+    }
 
     // If random sampler hasn't been initialized yet, lets do it now
     if (!fSpectrumRndm) {
       // Be7 is always a particular case due to its discrete nature
       // The last parameter is set to 1 to disallow interpolations
       if (fNuType == "be7") {
-        fSpectrumRndm = new CLHEP::RandGeneral(&csScaledFluxTbl[0],fFluxTbl.size(),1);
+        fSpectrumRndm = new CLHEP::RandGeneral(&csScaledFluxTbl[0], csScaledFluxTbl.size(),1);
       } else {
         // set interpolation bit to 0 to allow for interpolations in continuous
         // spectra
-        fSpectrumRndm = new CLHEP::RandGeneral(&csScaledFluxTbl[0],fFluxTbl.size(),0);
+        fSpectrumRndm = new CLHEP::RandGeneral(&csScaledFluxTbl[0], csScaledFluxTbl.size(),0);
       }
     }
 
@@ -128,6 +146,15 @@ namespace RAT {
       fSpectrumRndm = 0;
     }
 
+    if (fFermiAngle) {
+      delete fFermiAngle;
+      fFermiAngle = 0;
+    }
+
+    if (fGTAngle) {
+      delete fGTAngle;
+      fGTAngle = 0;
+    }
   }
 
 
@@ -150,15 +177,16 @@ namespace RAT {
 
     // Throw values against a cross-section.
     //bool passed=false;
-    double Enu, Te;
-
+    double Enu, Te, Enucleus;
+    int TransitionType;
     // Updated sampler (orders of magnitude faster)
     // Given the neutrino energy, use the differential cross section
     // shape and sample from it.
     Enu = SampleNuEnergy()*MeV;
-    Te = SampleRecoilEnergy(Enu)*MeV;
+    //std::cout << "Enu: " << Enu << " Sigma: " << fXS->Sigma(Enu) << std::endl;
+    Te = SampleRecoilEnergy(Enu,TransitionType,Enucleus)*MeV;
     //Doesn't support exictation currently
-    e_nucleus = 0;
+    e_nucleus = Enucleus;
 
     // from the incoming neutrino we have already the initial direction.
     // The final electron direction will follow that.
@@ -171,8 +199,10 @@ namespace RAT {
     // build the 4-momentum vector of the neutrino
     // We will only use the neutrino initial momentum as a baseline to add up to the electron direction
 
-    G4double theta_e = acos(sqrt((Te*(fMassElectron+Enu)*(fMassElectron+Enu))/(2*fMassElectron*Enu*Enu + Enu*Enu*Te)));
+    G4double theta_e = SampleRecoilAngle(Enu, Te, TransitionType);//acos(sqrt((Te*(fMassElectron+Enu)*(fMassElectron+Enu))/(2*fMassElectron*Enu*Enu + Enu*Enu*Te)));
 
+    std::cout << "Enu: " << Enu << " Te: " << Te << " Enucleus: " << Enucleus << " e_nucleus: " << e_nucleus << " TransitionType: " << TransitionType << std::endl;
+    //std::cout << "(Enu - Te):" << Enu - Te << " Ee (Te + 0.511): " << Te + 0.511 << " Enu - Ee: " << Enu - Te - 0.511<< std::endl;
     G4double tot_Ee = Te + fMassElectron;
     G4double p_e = sqrt(tot_Ee*tot_Ee - fMassElectron*fMassElectron);
 
@@ -230,6 +260,7 @@ namespace RAT {
     if (fGenType != nutype ) {
       fNuType = nutype;
       fGenLoaded = false;
+      Reset();
       LoadGenerator();
     }
   }
@@ -242,6 +273,7 @@ namespace RAT {
     if (fNuFlavor != nuflavor ) {
       fNuFlavor = nuflavor;
       fGenLoaded = false;
+      Reset();
       LoadGenerator();
     }
   }
@@ -250,6 +282,7 @@ namespace RAT {
     if (fDBName != name) {
       fDBName = name;
       fGenLoaded = false;
+      Reset();
       LoadGenerator();
     }
   }
@@ -257,21 +290,60 @@ namespace RAT {
   // This function samples the energy spectrum of the chosen neutrino and
   // decides from it the proper energy.
   // Keep in mind that pep is always the same, but be7 is a *very* special case
-  G4double CCgen::SampleRecoilEnergy(G4double Enu) {
+  G4double CCgen::SampleRecoilEnergy(G4double Enu, int &Transition, double &Enucleus) {
 
     G4double Te = 0.0;
 
     // Get the shape of the differential cross section.
-    TGraph *dsigmadt = fXS->DrawdSigmadT(Enu);
+    std::vector<double> scaled_norms = fXS->CalcdSigmadTNorms(Enu);
+    std::vector<double> allowed_ke = fXS->CalcAllowedElectronKE(Enu);
+    std::vector<double> allowed_nuclear = fXS->CalcAllowedNuclearEx(Enu);
+    //std::cout << "Norms: " << scaled_norms.size() << " KEs: " << allowed_ke.size() << " Excits: " << allowed_nuclear.size() << std::endl;
+    double total = 0;
+    for (unsigned int i = 0; i < scaled_norms.size(); i++) {
+      total += scaled_norms[i];
+    }
+    std::vector<double> cumulative;
+    for (unsigned int i = 0; i < scaled_norms.size(); i++) {
+      cumulative.push_back(scaled_norms[i]*1.0/total);
+      if (i > 0) {
+        cumulative[i] += cumulative[i-1];
+      }
+      //std::cout << "Cumulative: " << cumulative[i] << std::endl;
+    }
+    double rand = CLHEP::RandFlat::shoot();
+    //std::cout << "Random: " << rand << std::endl;
+    int count = 0;
+    double prev_cumul = 0;
+    for (unsigned int i = 0; i < cumulative.size(); i++) {
+      count = i;
+      if (rand > prev_cumul && rand < cumulative[i]) {
+        break;
+      }
+      prev_cumul = cumulative[i];
+    }
+    //std::cout << "Selected: " << count << std::endl;
 
-    // Interpolate between the discrete points
-    CLHEP::RandGeneral *rndm = new CLHEP::RandGeneral(dsigmadt->GetY(),dsigmadt->GetN(),0);
-
-    Te = rndm->shoot()*(dsigmadt->GetX())[dsigmadt->GetN()-1];
-    delete rndm;
-    delete dsigmadt;
-
+    Te = allowed_ke[count];
+    //std::cout << "Selected KE: " << Te << std::endl;
+    Transition = fXS->GetAllowedTransitionTypes(Enu)[count];
+    //std::cout << "Selected transition type: " << Transition << std::endl;
+    Enucleus = allowed_nuclear[count];
+    //std::cout << "Selected nuclear energy: " << allowed_nuclear[count] << std::endl;
     return Te;
+  }
+
+  G4double CCgen::SampleRecoilAngle(G4double Enu, G4double Te, int Transition) {
+
+    G4double theta = 0;
+
+    if (Transition == 0) {
+      theta = fFermiAngle->GetRandom();
+    }
+    else if (Transition == 1) {
+      theta = fGTAngle->GetRandom();
+    }
+    return theta;
   }
 
   // This function samples the energy spectrum of the chosen neutrino and

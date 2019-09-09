@@ -73,7 +73,7 @@ namespace RAT {
     //
 
     CLHEP::HepLorentzVector mom_electron, mom_nu;
-    double e_nucleus;
+    double e_nucleus = 0;
     fCCgen->GenerateEvent( fNuDir, mom_nu, mom_electron, e_nucleus);
 
 
@@ -91,9 +91,9 @@ namespace RAT {
     vertex->SetPrimary( electron_particle );  
 
     // Add the Be7 nucleus leftover (at rest)
-    G4ParticleDefinition* be7_ion = G4IonTable::GetIonTable()->FindIon(4,7,e_nucleus);
-    G4PrimaryParticle* be7_part = new G4PrimaryParticle(be7_ion, 0, 0, 0); //FIXME Do I need to add the energy here also? -> Write a quick excitation generator
-    vertex->SetPrimary(be7_part);
+    //G4ParticleDefinition* be7_ion = G4IonTable::GetIonTable()->FindIon(4,7,e_nucleus);
+    //G4PrimaryParticle* be7_part = new G4PrimaryParticle(be7_ion, 0, 0, 0); //FIXME Do I need to add the energy here also? -> Write a quick excitation generator
+    //vertex->SetPrimary(be7_part);
 
     // Add the incoming neutrino as the primary
     G4PrimaryParticle *neutrinoparent;
