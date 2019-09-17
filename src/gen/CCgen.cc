@@ -375,4 +375,35 @@ namespace RAT {
     return Enu;
   }
 
+  G4double CCgen::GetRatePerTarget() {
+    if (!fGenLoaded) {
+      G4Exception("CCgen::GetRatePerTarget","404",FatalErrorInArgument,"Trying to get rate before initializing all parameters.");
+    }
+
+    G4double intRate = 0.0;
+
+    // Have to deal with the special cases separately
+    if (fNuType == "pep") {
+      intRate = fXS->Sigma(fEnuMin);
+    } else if (fNuType == "be7") {
+      intRate = fXS->Sigma(fEnuMin)*fNuSpectrum->GetY()[0];
+      intRate += fXS->Sigma(fEnuMax)*fNuSpectrum->GetY()[1];
+    } else {
+      // For some unknown reason ROOT TGraph::Integral() does not
+      // like to calculate integrals of adjacent points
+      // so I do it by hand using a trapezoidal rule
+      // The input spectra have a fine enough grain that the error
+      // is negligible.
+
+      for (G4int ip = 0; ip < fNuSpectrum->GetN()-1; ++ip) {
+        G4double de = fNuSpectrum->GetX()[ip+1]-fNuSpectrum->GetX()[ip];
+        G4double integ = (0.5*de)*(fNuSpectrum->GetY()[ip+1] +fNuSpectrum->GetY()[ip]);
+        intRate += integ*fXS->Sigma((fNuSpectrum->GetX())[ip+1]);
+      }
+    }
+
+    // don't forget the scale factor from the cross section
+    // nor the total flux
+    return intRate*fXS->CrossSecNorm()*fTotalFlux;
+  }
 } // namespace RAT

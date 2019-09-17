@@ -84,6 +84,16 @@ namespace RAT {
 			return fTotalFlux;
 		}
 
+        /**
+	     * @brief Getter for the SSM event rate per target for this flux.
+	     *
+	     * The SSM event rate is obtained from the product of the cross section and the flux:
+	     * \f$ R_{\nu} = \sigma \times \Phi_{\nu} \f$
+	     *
+	     * @return The event Rate predicted by the SSM (in Hz)
+	     */
+        G4double GetRatePerTarget();
+
 		/**
      * Getter of the DB entry to input the spectrum from.
      * @return name of the DB name.
