@@ -125,6 +125,8 @@ namespace RAT {
 
     // If it reaches this point without failing then everything should be fine
     fGenLoaded = true;
+    std::cout << "Rate per target for CC of " << fNuType.c_str() << " flux on Li7 is: " << GetRatePerTarget() << std::endl;
+    std::cout << "Enu min: " << fEnuMin << std::endl;
   }
 
 
@@ -183,6 +185,7 @@ namespace RAT {
     // Given the neutrino energy, use the differential cross section
     // shape and sample from it.
     Enu = SampleNuEnergy()*MeV;
+    std::cout << Enu << std::endl;
     //std::cout << "Enu: " << Enu << " Sigma: " << fXS->Sigma(Enu) << std::endl;
     Te = SampleRecoilEnergy(Enu,TransitionType,Enucleus)*MeV;
     //Doesn't support exictation currently
@@ -201,7 +204,7 @@ namespace RAT {
 
     G4double theta_e = SampleRecoilAngle(Enu, Te, TransitionType);//acos(sqrt((Te*(fMassElectron+Enu)*(fMassElectron+Enu))/(2*fMassElectron*Enu*Enu + Enu*Enu*Te)));
 
-    std::cout << "Enu: " << Enu << " Te: " << Te << " Enucleus: " << Enucleus << " e_nucleus: " << e_nucleus << " TransitionType: " << TransitionType << std::endl;
+    //std::cout << "Enu: " << Enu << " Te: " << Te << " Enucleus: " << Enucleus << " e_nucleus: " << e_nucleus << " TransitionType: " << TransitionType << std::endl;
     //std::cout << "(Enu - Te):" << Enu - Te << " Ee (Te + 0.511): " << Te + 0.511 << " Enu - Ee: " << Enu - Te - 0.511<< std::endl;
     G4double tot_Ee = Te + fMassElectron;
     G4double p_e = sqrt(tot_Ee*tot_Ee - fMassElectron*fMassElectron);
@@ -247,7 +250,7 @@ namespace RAT {
 
   void CCgen::Show()
   {
-    G4cout << "Elastic Scattering Settings:\n";
+    G4cout << "Charged Current Settings:\n";
     G4cout << "NuType : " << fNuType.c_str() << "\n";
 
   }
@@ -397,11 +400,11 @@ namespace RAT {
 
       for (G4int ip = 0; ip < fNuSpectrum->GetN()-1; ++ip) {
         G4double de = fNuSpectrum->GetX()[ip+1]-fNuSpectrum->GetX()[ip];
-        G4double integ = (0.5*de)*(fNuSpectrum->GetY()[ip+1] +fNuSpectrum->GetY()[ip]);
-        intRate += integ*fXS->Sigma((fNuSpectrum->GetX())[ip+1]);
+        G4double integ = (0.5*de)*(fNuSpectrum->GetY()[ip+1]*fXS->Sigma((fNuSpectrum->GetX())[ip+1]) + fNuSpectrum->GetY()[ip]*fXS->Sigma((fNuSpectrum->GetX())[ip]));
+        intRate += integ;
       }
     }
-
+    std::cout << "Interaction rate: " << intRate << " XS norm: " << fXS->CrossSecNorm() << " Total Flux: " << fTotalFlux << std::endl;
     // don't forget the scale factor from the cross section
     // nor the total flux
     return intRate*fXS->CrossSecNorm()*fTotalFlux;
